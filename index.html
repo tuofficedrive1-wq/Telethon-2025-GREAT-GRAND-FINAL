@@ -168,6 +168,7 @@
         // --- Google Sheet Configuration and Logic ---
         
         const DEFAULT_SHEET_CONFIGS = {
+            // Class Wise
             "Ibtidaiya": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Ibtidaiya" },
             "Sale Awwal": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Sale Awwal" },
             "Sale Duwam": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Sale Duwam" },
@@ -181,8 +182,15 @@
             "Doratul Hadis": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Daurul Hadis" },
             "Takhassusat": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Takhassusat" },
             "Darulifta Ahle Sunnat": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Darul Ifta" },
-            "Overall Rank": { id: null, sheet: null },
-            "Result": { id: null, sheet: null },
+            
+            // Jamia/Overall Wise Rank
+            "Class": { id: null, sheet: null }, // This is for the overall class rank view, not a sheet
+            "Jamia": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "JAMIA" },
+            "Division": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "DIVISION" },
+            "State": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "STATE" },
+            "Region": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "REGION" },
+
+            // Other Tabs
             "Region Competition": { id: null, sheet: null }
         };
 
@@ -273,6 +281,9 @@
         const UNIT_CANDIDATES = ["Unit", "UNIT", "Units"];
         const REGION_CANDIDATES = ["Region", "REGION", "Zone"];
         const PHOTO_CANDIDATES = ["Photo", "Image", "Pic", "Profile Picture"];
+        const NAME_CANDIDATES = ["Name", "name"];
+        const DIVISION_CANDIDATES = ["Division", "division"];
+        const STATE_CANDIDATES = ["State", "state"];
 
         function findColumnByCandidates(cols, candidates) {
             const lower = cols.map((c) => (c || "").toLowerCase().trim());
@@ -304,23 +315,6 @@
             if (i === 1) return "🥈";
             if (i === 2) return "🥉";
             return "";
-        }
-        
-        function calculateTimeRemaining(targetDate) {
-            if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
-            const now = new Date();
-            const difference = targetDate - now;
-
-            if (difference <= 0) {
-                return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
-            }
-
-            const seconds = Math.floor((difference / 1000) % 60);
-            const minutes = Math.floor((difference / 1000 / 60) % 60);
-            const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-            
-            return { days, hours, minutes, seconds, expired: false }; 
         }
         
         function parseNumericValue(value, isInteger = false) {
@@ -524,7 +518,7 @@
                     <div style={{ flexGrow: 1 }}>
                          <div style={{
                             display: 'grid',
-                            gridTemplateColumns: '80px 200px 1fr 200px 200px',
+                            gridTemplateColumns: '80px 220px 1fr 200px',
                             alignItems: 'center',
                             gap: '16px',
                             padding: '12px 16px',
@@ -538,7 +532,6 @@
                             <span>Rank</span>
                             <span>{isTakhassusat ? 'Jamia Name' : 'Ustaz Name'}</span>
                             <span style={{ textAlign: 'center' }}>{isTakhassusat ? 'Class' : 'Jamia Name'}</span>
-                            <span style={{ textAlign: 'right' }}>Raqam</span>
                             <span style={{ textAlign: 'right' }}>Unit</span>
                         </div>
 
@@ -555,7 +548,7 @@
                                 return (
                                     <div key={winner.__id || idx} style={{
                                         display: 'grid',
-                                        gridTemplateColumns: '80px 200px 1fr 200px 200px',
+                                        gridTemplateColumns: '80px 220px 1fr 200px',
                                         alignItems: 'center',
                                         gap: '16px',
                                         padding: '12px 16px',
@@ -570,11 +563,10 @@
                                         <span style={{ textAlign: 'center', fontWeight: 'bold' }}>
                                             {medalForIndex(idx)} {isTakhassusat ? winner.ustaz : winner.jamia}
                                         </span>
-                                        <span style={{ textAlign: 'right', fontWeight: 'bold' }}>{winner.__value.toLocaleString()}</span>
                                         <span style={{ 
                                             textAlign: 'right', 
                                             fontFamily: "'Bebas Neue', cursive",
-                                            fontSize: '28px',
+                                            fontSize: '36px',
                                             color: '#4f46e5'
                                         }}>{winner.unit}</span>
                                     </div>
@@ -679,56 +671,6 @@
             );
         };
         
-        const PdfResultPoster = ({ data }) => {
-            if (!data) return null;
-            const { winners, date } = data;
-            const classOrder = Object.keys(DEFAULT_SHEET_CONFIGS).filter(key => winners[key]);
-
-            return (
-                <div id="poster-to-download" style={{
-                    width: '1240px',
-                    padding: '40px',
-                    background: 'white',
-                    fontFamily: "'Inter', sans-serif",
-                    color: '#1e293b',
-                }}>
-                    <div style={{ textAlign: 'center', borderBottom: '2px solid #e2e8f0', paddingBottom: '16px', marginBottom: '24px' }}>
-                        <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '60px', color: '#1e3a8a', letterSpacing: '2px', margin: 0 }}>TELETHON 2025</h1>
-                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '40px', color: '#6366f1', letterSpacing: '2px', margin: 0 }}>QUARTER FINAL COMPETITION RESULTS</p>
-                        <p style={{ fontSize: '16px', color: '#475569', marginTop: '8px' }}>Date: {date}</p>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
-                        {classOrder.map(className => (
-                            <div key={className} style={{ border: '1px solid #cbd5e1', borderRadius: '12px', padding: '16px', backgroundColor: '#f8fafc', breakInside: 'avoid' }}>
-                                <h3 style={{ fontFamily: "'Bowlby One SC', cursive", fontSize: '24px', color: '#1e3a8a', marginBottom: '12px', textAlign: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                                    {className}
-                                </h3>
-                                <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    {winners[className].slice(0, 3).map((winner, idx) => (
-                                        <li key={idx} style={{ display: 'flex', alignItems: 'center', padding: '8px', borderRadius: '6px', background: ['#fffbeb', '#f0f9ff', '#f0fdf4'][idx] }}>
-                                            <span style={{ fontSize: '24px', marginRight: '12px' }}>{medalForIndex(idx)}</span>
-                                            <div>
-                                                <p style={{ fontWeight: '600', fontSize: '16px', margin: 0 }}>{winner.jamia}</p>
-                                                <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>{winner.ustaz}</p>
-                                            </div>
-                                            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                                                 <span style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '22px', color: '#4f46e5' }}>{winner.unit}</span>
-                                                 <span style={{ display: 'block', fontSize: '10px', color: '#64748b', marginTop: '-4px' }}>UNITS</span>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ol>
-                            </div>
-                        ))}
-                    </div>
-                     <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '32px', paddingTop: '16px', borderTop: '2px solid #e2e8f0'}}>
-                        <p style={{ color: '#475569', fontSize: '16px', fontWeight: '600' }}>Majlis Talimi Umoor India</p>
-                    </div>
-                </div>
-            );
-        };
-
         // --- Region Competition Component ---
         const RegionCompetitionView = ({ regionData, isLoading, error }) => {
             const getUnit = (regionName) => {
@@ -821,8 +763,25 @@
         };
 
         function TelethoneEnhancedLive() {
-            const allOptions = Object.keys(DEFAULT_SHEET_CONFIGS);
-            const [active, setActive] = useState("Ibtidaiya"); 
+            const TAB_CONFIG = {
+                "Class Wise Rank": {
+                    subTabs: ["Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis", "Takhassusat", "Darulifta Ahle Sunnat"],
+                    defaultSubTab: "Ibtidaiya",
+                },
+                "Overall Rank": { 
+                    subTabs: ["Class", "Jamia", "Division", "State", "Region"],
+                    defaultSubTab: "Class",
+                },
+                "Region Competition": { 
+                    subTabs: [],
+                }
+            };
+
+            const MAIN_TABS = Object.keys(TAB_CONFIG);
+
+            const [mainActive, setMainActive] = useState("Class Wise Rank");
+            const [subActive, setSubActive] = useState("Ibtidaiya"); 
+            
             const [overrides, setOverrides] = useState(() => {
                 try {
                     const raw = localStorage.getItem(LOCALSTORAGE_KEY);
@@ -846,24 +805,6 @@
             const [sheetInput, setSheetInput] = useState("");
             const [highlightKey, setHighlightKey] = useState(null);
             
-            // NOTE: To change the result announcement time, modify the date string below.
-            // Format: 'YYYY-MM-DDTHH:mm:ss' (e.g., '2025-10-08T21:30:00')
-            const [targetDate, setTargetDate] = useState(new Date('2025-10-08T23:15:00'));
-
-            // NOTE: To change the result page heading, modify the text below.
-            const resultPageHeading = "Grand Final competition";
-            
-            const [countdown, setCountdown] = useState(() => calculateTimeRemaining(targetDate));
-
-            const [resultData, setResultData] = useState(() => {
-                try {
-                    const savedResults = localStorage.getItem(LAST_RESULTS_KEY);
-                    return savedResults ? JSON.parse(savedResults) : {};
-                } catch { return {}; }
-            });
-
-            const [isResultLoading, setResultLoading] = useState(false);
-            const [resultError, setResultError] = useState(null);
             const [overallRankData, setOverallRankData] = useState([]);
             const [isRankLoading, setRankLoading] = useState(true);
             const [isRankDataLoaded, setIsRankDataLoaded] = useState(false);
@@ -874,6 +815,28 @@
             const [posterData, setPosterData] = useState(null);
             const [isDownloading, setIsDownloading] = useState(false);
             const posterContainerRef = useRef(null);
+
+             const RANKING_VIEW_CONFIG = {
+                // Class Wise
+                "Ibtidaiya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Sale Awwal": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Sale Duwam": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Ula": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Saniya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Salisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Rabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Khamisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Sadisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Sabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Doratul Hadis": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Takhassusat": { nameLabel: "Jamia Name", categoryLabel: "Class", nameColCandidates: JAMIA_CANDIDATES, categoryColCandidates: USTAZ_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+                // Jamia/Overall Wise
+                "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+                "Division": { nameLabel: "Name", categoryLabel: "Division", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: DIVISION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+                "State": { nameLabel: "Name", categoryLabel: "State", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: STATE_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+                "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+            };
 
             useEffect(() => {
                 posterContainerRef.current = document.getElementById('poster-container');
@@ -963,7 +926,7 @@
                 const winnerList = (winners || data.items).slice(0, count);
                 setPosterData({ 
                     type: 'list', 
-                    className: className || active, 
+                    className: className || subActive, 
                     winners: winnerList, 
                     date: now, 
                     title: `TELETHON 2025 TOP ${count}` 
@@ -977,7 +940,7 @@
                 const winners = data.items;
                 setPosterData({ 
                     type: 'list', 
-                    className: active, 
+                    className: subActive, 
                     winners, 
                     date: now, 
                     title: `TELETHON 2025 FULL LIST` 
@@ -997,23 +960,10 @@
                 });
             };
 
-            const handleDownloadPdfResult = () => {
-                if (Object.keys(resultData).length === 0) return;
-                const now = formatDateTimeForPoster(new Date());
-                setIsDownloading(true);
-                setPosterData({
-                    type: 'pdf',
-                    className: 'Full-Results',
-                    winners: resultData,
-                    date: now,
-                });
-            };
-
-
             function getActiveConfig() {
-                const cfg = DEFAULT_SHEET_CONFIGS[active] || { id: "", sheet: "Sheet1" };
-                const id = overrides[active] ?? cfg.id ?? "";
-                return { id, sheet: cfg.sheet || "Sheet1" };
+                const cfg = DEFAULT_SHEET_CONFIGS[subActive] || { id: "", sheet: "Sheet1" };
+                const id = overrides[subActive] ?? cfg.id ?? "";
+                return { id, sheet: cfg.sheet || subActive || "Sheet1" };
             }
 
             async function loadActiveSheet() {
@@ -1030,13 +980,20 @@
                 setError(null);
                 try {
                     const { cols, items: rows } = await fetchSheetData(id, sheet);
-                    const rankCol = findColumnByCandidates(cols, RANK_CANDIDATES);
-                    const ustazCol = findColumnByCandidates(cols, USTAZ_CANDIDATES);
-                    const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
-                    const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
+                    const currentViewConfig = RANKING_VIEW_CONFIG[subActive];
+                    if (!currentViewConfig) {
+                        setError(`Configuration for "${subActive}" not found.`);
+                        setLoading(false);
+                        setData({ items: [] });
+                        return;
+                    }
 
-                    if (!jamiaCol || !raqamCol) {
-                        setError("Sheet mein 'Jamia Name' aur 'Raqam' ke headers hone chahiye.");
+                    const nameCol = findColumnByCandidates(cols, currentViewConfig.nameColCandidates);
+                    const categoryCol = findColumnByCandidates(cols, currentViewConfig.categoryColCandidates);
+                    const valueCol = findColumnByCandidates(cols, currentViewConfig.valueColCandidates);
+
+                    if (!categoryCol || !valueCol) {
+                        setError(`Sheet mein '${currentViewConfig.categoryLabel}' aur '${currentViewConfig.valueIsUnit ? 'Unit' : 'Raqam'}' ke headers hone chahiye.`);
                         setData({ items: [] });
                         setLoading(false);
                         setIsDataLoaded(true);
@@ -1045,18 +1002,27 @@
 
                     const parsed = rows
                         .map((r, idx) => {
-                            const n = parseNumericValue(r[raqamCol]);
+                            const rawValue = r[valueCol];
+                            const n = parseNumericValue(rawValue);
+                            
+                            let unit, value;
+                            if (currentViewConfig.valueIsUnit) {
+                                unit = n.toFixed(1);
+                                value = n; // The value is the unit itself.
+                            } else {
+                                unit = formatUnit(n);
+                                value = n;
+                            }
+
                             return { 
-                                __id: idx, 
-                                rank: String(r[rankCol] || "").trim(), 
-                                ustaz: String(r[ustazCol] || "").trim(), 
-                                jamia: String(r[jamiaCol] || "").trim(), 
-                                unit: formatUnit(n),
-                                raqamRaw: r[raqamCol], 
-                                __value: n
+                                __id: idx,
+                                name: String(r[nameCol] || "").trim(), 
+                                category: String(r[categoryCol] || "").trim(), 
+                                unit: unit,
+                                __value: value,
                             };
                         })
-                        .filter((x) => x.jamia !== "" && !Number.isNaN(x.__value));
+                        .filter((x) => x.category !== "" && !Number.isNaN(x.__value));
 
                     parsed.sort((a, b) => b.__value - a.__value);
                     
@@ -1080,7 +1046,7 @@
             async function loadOverallRank() {
                 setRankLoading(true);
                 setRankError(null);
-                const sheetOptions = allOptions.filter(key => DEFAULT_SHEET_CONFIGS[key].id);
+                const sheetOptions = TAB_CONFIG["Class Wise Rank"].subTabs; // Only aggregate class ranks
                 
                 const fetchPromises = sheetOptions.map(async (opt) => {
                     const cfg = DEFAULT_SHEET_CONFIGS[opt];
@@ -1115,67 +1081,11 @@
                      setIsRankDataLoaded(true);
                 }
             }
-
-            const loadAllResults = async () => {
-                if (isResultLoading) return;
-                setResultLoading(true);
-                setResultError(null);
-                const sheetOptions = allOptions.filter(key => DEFAULT_SHEET_CONFIGS[key].id);
-
-                const fetchPromises = sheetOptions.map(async (opt) => {
-                    const cfg = DEFAULT_SHEET_CONFIGS[opt];
-                    const id = overrides[opt] ?? cfg.id;
-                    if (!isValidSheetId(id)) return { className: opt, winners: [], error: "Not Configured" };
-
-                    try {
-                        const { cols, items: rows } = await fetchSheetData(id, cfg.sheet);
-                        const jamiaCol = findColumnByCandidates(cols, JAMIA_CANDIDATES);
-                        const ustazCol = findColumnByCandidates(cols, USTAZ_CANDIDATES);
-                        const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
-                        const photoCol = findColumnByCandidates(cols, PHOTO_CANDIDATES);
-
-                        if (!jamiaCol || !raqamCol) return { className: opt, winners: [], error: "Missing Columns" };
-
-                        const parsed = rows
-                            .map((r, idx) => {
-                                const value = parseNumericValue(r[raqamCol]);
-                                return {
-                                    __id: idx,
-                                    ustaz: String(r[ustazCol] || "").trim(),
-                                    jamia: String(r[jamiaCol] || "").trim(),
-                                    __value: value,
-                                    unit: formatUnit(value),
-                                    photoUrl: photoCol ? getGoogleDriveImageUrl(r[photoCol]) : null
-                                };
-                            })
-                            .filter(x => x.jamia !== "" && !Number.isNaN(x.__value));
-                        parsed.sort((a, b) => b.__value - a.__value);
-                        return { className: opt, winners: parsed.slice(0, 10) };
-                    } catch (err) {
-                        return { className: opt, winners: [], error: err.message };
-                    }
-                });
-
-                try {
-                    const results = await Promise.all(fetchPromises);
-                    const winnersMap = {};
-                    results.forEach(r => {
-                        if (r.winners.length > 0) winnersMap[r.className] = r.winners;
-                        if (r.error?.includes("Too many requests")) setResultError(r.error);
-                    });
-                    setResultData(winnersMap);
-                    localStorage.setItem(LAST_RESULTS_KEY, JSON.stringify(winnersMap));
-                } catch (e) {
-                    setResultError("Sabhi results data ko process nahi kiya ja saka.");
-                } finally {
-                    setResultLoading(false);
-                }
-            }
             
             async function loadRegionData() {
                 setRegionLoading(true);
                 setRegionError(null);
-                const sheetOptions = allOptions.filter(key => DEFAULT_SHEET_CONFIGS[key].id);
+                const sheetOptions = TAB_CONFIG["Class Wise Rank"].subTabs;
                 const regionTotals = {};
 
                 const fetchPromises = sheetOptions.map(async (opt) => {
@@ -1223,48 +1133,46 @@
             // This is the main polling/timer effect that controls what happens for each tab.
             useEffect(() => {
                 let pollId;
+                let actionToRun = () => {};
 
-                const actionMap = {
-                    "Overall Rank": loadOverallRank,
-                    "Region Competition": loadRegionData,
-                    "Result": loadAllResults,
-                    "Default": loadActiveSheet,
-                };
-                const currentAction = actionMap[active] || actionMap["Default"];
+                if (mainActive === 'Region Competition') {
+                    actionToRun = loadRegionData;
+                } else if (mainActive === 'Overall Rank' && subActive === 'Class') {
+                    actionToRun = loadOverallRank;
+                } else {
+                    actionToRun = loadActiveSheet;
+                }
                 
                 const { id } = getActiveConfig();
-                if (active !== "Result" && active !== "Overall Rank" && active !== "Region Competition" && !isValidSheetId(id)) {
+                const isRankingsView = mainActive === 'Class Wise Rank' || (mainActive === 'Overall Rank' && subActive !== 'Class');
+
+                if (isRankingsView && !isValidSheetId(id)) {
                      setData({ items: [] });
                      setError(null);
                      setLoading(false);
                      setIsDataLoaded(true);
                 } else {
-                    currentAction();
-                    pollId = setInterval(currentAction, POLL_INTERVAL_MS);
+                    actionToRun();
+                    pollId = setInterval(actionToRun, POLL_INTERVAL_MS);
                 }
                 
                 return () => {
                     if (pollId) clearInterval(pollId);
                 };
-            }, [active, overrides]);
-
-            // This effect handles the countdown timer for the Result tab
-            useEffect(() => {
-                 if (targetDate) {
-                    const timer = setInterval(() => {
-                        const remaining = calculateTimeRemaining(targetDate);
-                        setCountdown(remaining);
-                    }, 1000);
-                    return () => clearInterval(timer);
-                }
-            }, [targetDate]);
+            }, [mainActive, subActive, overrides]);
             
-            const ustazLabel = active === 'Takhassusat' ? 'Jamia Name' : 'Ustaz Name';
-            const jamiaLabel = active === 'Takhassusat' ? 'Class' : 'Jamia Name';
+            const handleMainTabClick = (tab) => {
+                setMainActive(tab);
+                if (TAB_CONFIG[tab].defaultSubTab) {
+                    setSubActive(TAB_CONFIG[tab].defaultSubTab);
+                }
+            };
+
+            const pageTitle = TAB_CONFIG[mainActive].subTabs.length > 0 ? subActive : mainActive;
 
             const showFullScreenLoader = (isLoading && !isDataLoaded) || 
-                                         (active === "Overall Rank" && isRankLoading && !isRankDataLoaded) ||
-                                         (active === "Region Competition" && isRegionLoading && Object.keys(regionData).length === 0);
+                                         (mainActive === "Overall Rank" && subActive === 'Class' && isRankLoading && !isRankDataLoaded) ||
+                                         (mainActive === "Region Competition" && isRegionLoading && Object.keys(regionData).length === 0);
             
             const classesForTop10 = ["Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa"];
             const classesForTop3 = ["Sadisa", "Sabia", "Doratul Hadis", "Takhassusat", "Darulifta Ahle Sunnat"];
@@ -1277,6 +1185,101 @@
                 </svg>
             );
 
+            const RankingsView = () => {
+                 const currentViewConfig = RANKING_VIEW_CONFIG[subActive];
+                 if (!currentViewConfig) return <div className="p-4 text-center text-rose-500">Error: No configuration found for {subActive}.</div>;
+                 const { nameLabel, categoryLabel } = currentViewConfig;
+
+                 return (
+                     <div className="bg-white border rounded-lg p-4 shadow-lg relative">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold text-slate-700">Live Rankings</h2>
+                            <div className="flex items-center gap-2">
+                                {classesForTop10.includes(subActive) && (
+                                    <>
+                                        <button onClick={() => handleDownloadClassPoster(5)} title="Download Top 5 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
+                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T5</span></>}
+                                        </button>
+                                        <button onClick={() => handleDownloadClassPoster(10)} title="Download Top 10 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
+                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T10</span></>}
+                                        </button>
+                                    </>
+                                )}
+                                 {classesForTop3.includes(subActive) && (
+                                     <button onClick={() => handleDownloadClassPoster(3)} title="Download Top 3 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
+                                        {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T3</span></>}
+                                    </button>
+                                )}
+                                {classesForFullList.includes(subActive) && (
+                                    <button onClick={handleDownloadFullListPoster} title="Download Full List Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-purple-600 rounded-lg shadow-sm hover:bg-purple-700 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
+                                        {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">FULL</span></>}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        {!isValidSheetId(getActiveConfig().id) && (
+                            <div className="mb-4 p-4 border rounded-xl bg-yellow-50 border-yellow-200 text-center">
+                                <div className="text-md font-semibold text-yellow-800 mb-2">{subActive} ke liye sheet configure nahi hai.</div>
+                                <div className="text-sm text-yellow-700 mb-3">Please paste Google Sheet URL or ID.</div>
+                                <form onSubmit={(e) => { e.preventDefault(); const id = parseSheetIdFromUrl(sheetInput); if(id) setOverrides(p => ({...p, [subActive]: id})); setSheetInput(''); }} className="flex gap-2 justify-center">
+                                    <input value={sheetInput} onChange={(e) => setSheetInput(e.target.value)} placeholder="Google Sheet URL or Sheet ID" className="flex-1 max-w-md px-3 py-2 border rounded-lg focus:ring-sky-500"/>
+                                    <button type="submit" className="px-4 py-2 rounded-lg bg-sky-600 text-white font-medium">Set Sheet</button>
+                                </form>
+                                {error && <div className="text-sm text-rose-600 mt-2">Error: {error}</div>}
+                            </div>
+                        )}
+                        {error && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-rose-600 mb-4 p-2 border border-rose-300 bg-rose-50 rounded-lg">Error: {error}</div>}
+                        <div className={`relative ${showFullScreenLoader ? 'opacity-50 pointer-events-none' : ''}`}>
+                            <div className="hidden md:block">
+                                <div className="grid grid-cols-10 items-center px-3 py-2 border-b text-sm font-semibold text-slate-700 bg-slate-50 rounded-t-lg">
+                                    <div className="col-span-1">Rank</div>
+                                    <div className="col-span-3">{nameLabel}</div>
+                                    <div className="col-span-4 text-center">{categoryLabel}</div>
+                                    <div className="col-span-2 text-right">Unit</div>
+                                </div>
+                                <div className="space-y-1 mt-1">
+                                    {data.items.map((it, idx) => {
+                                        const styleClass = idx === 0 ? "bg-yellow-50 border-yellow-300 shadow-md" : idx === 1 ? "bg-sky-50 border-sky-300" : idx === 2 ? "bg-emerald-50 border-emerald-300" : "bg-white border-transparent hover:bg-slate-50";
+                                        return (
+                                            <div key={it.__id} className={`grid grid-cols-10 items-center gap-4 p-3 rounded-lg transition-all duration-600 ${styleClass} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
+                                                <div className="col-span-1 font-bold text-lg">{idx + 1}</div>
+                                                <div className="col-span-3 text-left text-sm font-medium">{it.name || "-"}</div>
+                                                <div className={`col-span-4 text-center font-bold ${idx === 0 ? 'text-xl' : 'text-lg'}`}><span className="inline-flex items-center gap-2">{medalForIndex(idx)}<span>{it.category}</span></span></div>
+                                                <div className="col-span-2 text-right text-3xl font-['Bebas_Neue'] text-indigo-600 tracking-wider">{it.unit || "-"}</div>
+                                            </div>
+                                        );
+                                    })}
+                                    {data.items.length === 0 && !isLoading && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-slate-500 p-3 text-center">No valid rows found.</div>}
+                                </div>
+                            </div>
+                            <div className="md:hidden space-y-3">
+                                {data.items.map((it, idx) => (
+                                    <div key={it.__id} className={`p-4 rounded-lg shadow-sm border ${idx === 0 ? "bg-yellow-50 border-yellow-300" : "bg-white border-slate-200"} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <div className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                                    <span className="text-2xl">{idx + 1}.</span>
+                                                    <span className="truncate max-w-[150px] sm:max-w-[200px]">{it.category}</span>
+                                                    <span>{medalForIndex(idx)}</span>
+                                                </div>
+                                                <div className="text-sm text-slate-600 mt-1">
+                                                    <span className="font-semibold">{nameLabel}:</span> {it.name || "-"}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="font-['Bebas_Neue'] font-bold text-4xl text-indigo-600">{it.unit || "-"}</span>
+                                                <span className="block text-xs text-slate-500 -mt-1 font-semibold">UNITS</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {data.items.length === 0 && !isLoading && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-slate-500 p-3 text-center">No valid rows found.</div>}
+                            </div>
+                        </div>
+                    </div>
+                 );
+            }
+
             return (
                 <div className="min-h-screen bg-gray-50">
                     {/* Poster component is rendered off-screen when needed */}
@@ -1285,8 +1288,7 @@
                     {posterData && posterData.type === 'podium10' && ReactDOM.createPortal(<Podium10Poster data={posterData} />, posterContainerRef.current)}
                     {posterData && posterData.type === 'list' && ReactDOM.createPortal(<ListPoster data={posterData} />, posterContainerRef.current)}
                     {posterData && posterData.type === 'overall' && ReactDOM.createPortal(<OverallRankPoster data={posterData} />, posterContainerRef.current)}
-                    {posterData && posterData.type === 'pdf' && ReactDOM.createPortal(<PdfResultPoster data={posterData} />, posterContainerRef.current)}
-
+                    
                     <div className="max-w-7xl mx-auto p-4 sm:p-6">
                         <header className="mb-6 text-center">
                             <h1 className="text-6xl sm:text-7xl font-['Bebas_Neue'] bg-clip-text text-transparent bg-gradient-to-r from-sky-500 to-indigo-600">
@@ -1297,11 +1299,11 @@
 
                         <nav className="mb-4">
                             <div className="hidden md:flex flex-wrap gap-2 justify-center">
-                                {allOptions.map((opt) => (
+                                {MAIN_TABS.map((opt) => (
                                     <button
                                         key={opt}
-                                        onClick={() => setActive(opt)}
-                                        className={`px-3 py-2 rounded-2xl font-medium text-sm shadow-sm focus:outline-none transition-transform transform hover:-translate-y-0.5 ${ active === opt ? "bg-sky-600 text-white shadow-lg" : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50" }`}
+                                        onClick={() => handleMainTabClick(opt)}
+                                        className={`px-4 py-2 rounded-full font-bold text-base shadow-sm focus:outline-none transition-all duration-300 transform hover:-translate-y-1 ${ mainActive === opt ? "bg-sky-600 text-white shadow-lg" : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:shadow-md" }`}
                                     >
                                         <span>{opt}</span>
                                     </button>
@@ -1309,14 +1311,35 @@
                             </div>
 
                             <div className="md:hidden">
-                                <select value={active} onChange={(e) => setActive(e.target.value)} className="block w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm">
-                                    {allOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                <select value={mainActive} onChange={(e) => handleMainTabClick(e.target.value)} className="block w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm">
+                                    {MAIN_TABS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                                 </select>
                             </div>
                         </nav>
                         
+                        {TAB_CONFIG[mainActive].subTabs.length > 0 && (
+                             <div className="mb-4 p-2 bg-slate-200 rounded-xl shadow-inner">
+                                <div className="hidden md:flex flex-wrap gap-1 justify-center">
+                                    {TAB_CONFIG[mainActive].subTabs.map((opt) => (
+                                        <button
+                                            key={opt}
+                                            onClick={() => setSubActive(opt)}
+                                            className={`px-3 py-1.5 rounded-lg font-medium text-xs shadow-sm focus:outline-none transition-colors duration-200 ${ subActive === opt ? "bg-indigo-600 text-white shadow-md" : "bg-white text-slate-600 hover:bg-indigo-50" }`}
+                                        >
+                                            <span>{opt}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="md:hidden">
+                                     <select value={subActive} onChange={(e) => setSubActive(e.target.value)} className="block w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                        {TAB_CONFIG[mainActive].subTabs.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex flex-col items-center justify-center p-3 bg-indigo-50 rounded-xl shadow-md mb-4 border border-indigo-200">
-                            <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-900 text-center uppercase">{active === 'Result' ? 'Result (Quarter Final Competition)' : active}</h2>
+                            <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-900 text-center uppercase">{pageTitle}</h2>
                         </div>
 
                         <main className="relative">
@@ -1329,7 +1352,9 @@
                                 </div>
                             )}
 
-                            {active === "Overall Rank" ? (
+                            {mainActive === "Region Competition" ? (
+                                <RegionCompetitionView regionData={regionData} isLoading={isRegionLoading} error={regionError} />
+                            ) : mainActive === "Overall Rank" && subActive === 'Class' ? (
                                 <div className="bg-white border rounded-lg p-4 shadow-lg relative">
                                     <div className="flex justify-between items-center mb-4 border-b pb-2">
                                         <h2 className="text-xl md:text-2xl font-bold text-slate-800">All India Classic Rank</h2>
@@ -1376,168 +1401,8 @@
                                         {overallRankData.length === 0 && !isRankLoading && <div className="text-center p-4 text-slate-500">No data available.</div>}
                                     </div>
                                 </div>
-                            ) : active === "Result" ? (
-                                <div className="bg-white border rounded-lg p-6 text-center shadow-lg">
-                                    
-                                    {targetDate ? (
-                                        <>
-                                            <h2 className="text-3xl font-extrabold text-slate-800 mb-4">{resultPageHeading}</h2>
-                                            {!countdown.expired ? (
-                                                <>
-                                                    <div className="text-xl font-medium text-slate-600 mb-6">Results will be announced at {targetDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}!</div>
-                                                    <div className="flex justify-center items-end gap-4 md:gap-8 font-bold">
-                                                        {Object.entries({ Days: countdown.days, Hours: countdown.hours, Minutes: countdown.minutes, Seconds: countdown.seconds }).map(([label, value]) => (
-                                                            <div key={label} className="flex flex-col items-center p-4 bg-sky-100 rounded-xl min-w-[70px] shadow-lg">
-                                                                <span className="text-4xl md:text-5xl text-sky-700">{String(value).padStart(2, '0')}</span>
-                                                                <span className="text-sm md:text-base text-slate-500">{label}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="flex justify-center items-center gap-4 mb-4">
-                                                        <div className="text-3xl font-bold text-emerald-600">Results Announced!</div>
-                                                        <button onClick={handleDownloadPdfResult} disabled={isDownloading} className="p-2 text-white bg-green-600 rounded-lg shadow-sm hover:bg-green-700 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5" title="Download Full Result PDF">
-                                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">PDF</span></>}
-                                                        </button>
-                                                    </div>
-                                                    {(isResultLoading && Object.keys(resultData).length === 0) ? <div className="text-sm text-slate-500 animate-pulse">Loading Results...</div> : Object.keys(resultData).length > 0 ? (
-                                                        <>
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                                {Object.keys(resultData).map(className => (
-                                                                    <div key={className} className="bg-gray-50 border border-gray-200 p-4 rounded-xl shadow-sm flex flex-col">
-                                                                        <div className="flex justify-between items-center mb-3 border-b pb-2">
-                                                                            <h3 className="text-xl font-bold text-slate-700">{className} Winners</h3>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <button onClick={() => handleDownloadTop3PodiumPoster(className, resultData[className])} title="Download Top 3 Podium Poster" disabled={isDownloading || resultData[className].length < 3} className="p-2 text-white bg-sky-500 rounded-lg shadow-sm hover:bg-sky-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                                                                    {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T3</span></>}
-                                                                                </button>
-                                                                                <button onClick={() => handleDownloadTop5PodiumPoster(className, resultData[className])} title="Download Top 5 Podium Poster" disabled={isDownloading || resultData[className].length < 5} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                                                                    {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T5</span></>}
-                                                                                </button>
-                                                                                <button onClick={() => handleDownloadTop10PodiumPoster(className, resultData[className])} title="Download Top 10 Podium Poster" disabled={isDownloading || resultData[className].length < 10} className="p-2 text-white bg-teal-500 rounded-lg shadow-sm hover:bg-teal-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                                                                    {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T10</span></>}
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="space-y-4 flex-grow">
-                                                                            {resultData[className].slice(0, 3).map((item, index) => (
-                                                                                <div key={index} className={`p-4 rounded-xl text-center transition-all duration-300 shadow-md ${index === 0 ? "bg-gradient-to-br from-amber-100 to-yellow-200 border-amber-300" : "bg-gradient-to-br from-slate-50 to-gray-100 border-slate-200"} border`}>
-                                                                                    <img
-                                                                                        src={item.photoUrl || 'https://placehold.co/200x200/e2e8f0/64748b?text=Photo'}
-                                                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/200x200/e2e8f0/64748b?text=Error'; }}
-                                                                                        alt={`Winner ${item.jamia}`}
-                                                                                        className="w-32 h-32 md:w-40 md:h-40 mx-auto rounded-full object-cover border-8 border-white shadow-xl mb-4"
-                                                                                    />
-                                                                                    <div className="flex-grow text-center">
-                                                                                        <p className={`text-xl font-bold ${index === 0 ? 'text-amber-800' : 'text-slate-800'}`}>{item.jamia}</p>
-                                                                                        <p className="text-md text-slate-500 mb-3">{item.ustaz}</p>
-                                                                                    </div>
-                                                                                    <div className={`inline-flex items-center justify-center p-3 rounded-lg ${index === 0 ? 'bg-amber-200' : 'bg-slate-200'}`}>
-                                                                                        <span className="text-4xl mr-3">{medalForIndex(index)}</span>
-                                                                                        <div>
-                                                                                             <span className="font-extrabold text-3xl font-['Bebas_Neue'] tracking-wider text-indigo-700">{item.unit}</span>
-                                                                                             <span className="block text-xs text-slate-600 -mt-1">UNITS</span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </>
-                                                    ) : <div className="text-sm text-slate-500 mt-2">No results found.</div>}
-                                                </>
-                                            )}
-                                        </>
-                                    ) : (
-                                         <div className="text-lg font-medium text-slate-500">Countdown time not set.</div>
-                                    )}
-                                </div>
-                            ) : active === "Region Competition" ? (
-                                <RegionCompetitionView regionData={regionData} isLoading={isRegionLoading} error={regionError} />
                             ) : (
-                                <div className="bg-white border rounded-lg p-4 shadow-lg relative">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h2 className="text-xl font-bold text-slate-700">Live Rankings</h2>
-                                        <div className="flex items-center gap-2">
-                                            {classesForTop10.includes(active) && (
-                                                <>
-                                                    <button onClick={() => handleDownloadClassPoster(5)} title="Download Top 5 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                                        {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T5</span></>}
-                                                    </button>
-                                                    <button onClick={() => handleDownloadClassPoster(10)} title="Download Top 10 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                                        {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T10</span></>}
-                                                    </button>
-                                                </>
-                                            )}
-                                             {classesForTop3.includes(active) && (
-                                                 <button onClick={() => handleDownloadClassPoster(3)} title="Download Top 3 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                                    {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T3</span></>}
-                                                </button>
-                                            )}
-                                            {classesForFullList.includes(active) && (
-                                                <button onClick={handleDownloadFullListPoster} title="Download Full List Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-purple-600 rounded-lg shadow-sm hover:bg-purple-700 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                                    {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">FULL</span></>}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {!isValidSheetId(getActiveConfig().id) && (
-                                        <div className="mb-4 p-4 border rounded-xl bg-red-50 border-red-200">
-                                            <div className="text-sm font-semibold text-red-700 mb-2">Sheet not configured. Paste Google Sheet URL or ID.</div>
-                                            <form onSubmit={(e) => { e.preventDefault(); const id = parseSheetIdFromUrl(sheetInput); if(id) setOverrides(p => ({...p, [active]: id})); setSheetInput(''); }} className="flex gap-2">
-                                                <input value={sheetInput} onChange={(e) => setSheetInput(e.target.value)} placeholder="Google Sheet URL or Sheet ID" className="flex-1 px-3 py-2 border rounded-lg focus:ring-sky-500"/>
-                                                <button type="submit" className="px-4 py-2 rounded-lg bg-sky-600 text-white font-medium">Set Sheet</button>
-                                            </form>
-                                            {error && <div className="text-sm text-rose-600 mt-2">Error: {error}</div>}
-                                        </div>
-                                    )}
-                                    {error && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-rose-600 mb-4 p-2 border border-rose-300 bg-rose-50 rounded-lg">Error: {error}</div>}
-                                    <div className={`relative ${showFullScreenLoader ? 'opacity-50 pointer-events-none' : ''}`}>
-                                        <div className="hidden md:block">
-                                            <div className="grid grid-cols-12 items-center px-3 py-2 border-b text-sm font-semibold text-slate-700 bg-slate-50 rounded-t-lg">
-                                                <div className="col-span-1">Rank</div>
-                                                <div className="col-span-2">{ustazLabel}</div>
-                                                <div className="col-span-4 text-center">{jamiaLabel}</div>
-                                                <div className="col-span-3 text-right">Raqam</div>
-                                                <div className="col-span-2 text-right">Unit</div>
-                                            </div>
-                                            <div className="space-y-1 mt-1">
-                                                {data.items.map((it, idx) => {
-                                                    const styleClass = idx === 0 ? "bg-yellow-50 border-yellow-300 shadow-md" : idx === 1 ? "bg-sky-50 border-sky-300" : idx === 2 ? "bg-emerald-50 border-emerald-300" : "bg-white border-transparent hover:bg-slate-50";
-                                                    return (
-                                                        <div key={it.__id} className={`grid grid-cols-12 items-center gap-4 p-3 rounded-lg transition-all duration-600 ${styleClass} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
-                                                            <div className="col-span-1 font-bold text-base">{idx + 1}</div>
-                                                            <div className="col-span-2 text-left text-sm font-medium">{active === 'Takhassusat' ? (it.jamia || "-") : (it.ustaz || "-")}</div>
-                                                            <div className={`col-span-4 text-center font-bold ${idx === 0 ? 'text-xl' : 'text-lg'}`}><span className="inline-flex items-center gap-2">{medalForIndex(idx)}<span>{active === 'Takhassusat' ? it.ustaz : it.jamia}</span></span></div>
-                                                            <div className="col-span-3 text-right text-xl font-bold">{it.__value.toLocaleString()}</div>
-                                                            <div className="col-span-2 text-right text-lg font-['Bebas_Neue'] text-indigo-600 tracking-wider">{it.unit || "-"}</div>
-                                                        </div>
-                                                    );
-                                                })}
-                                                {data.items.length === 0 && !isLoading && <div className="text-sm text-slate-500 p-3 text-center">No valid rows found.</div>}
-                                            </div>
-                                        </div>
-                                        <div className="md:hidden space-y-3">
-                                            {data.items.map((it, idx) => (
-                                                <div key={it.__id} className={`p-4 rounded-lg shadow-sm ${idx === 0 ? "bg-yellow-50 border-yellow-300" : "bg-white border-slate-100"} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
-                                                    <div className="flex items-center justify-between border-b pb-2 mb-2">
-                                                        <div className="text-xl font-bold text-slate-800 flex items-center gap-2"><span>{idx + 1}.</span><span className="truncate max-w-[200px]">{active === 'Takhassusat' ? it.ustaz : it.jamia}</span><span>{medalForIndex(idx)}</span></div>
-                                                        <div className="text-xl font-bold text-right">{it.__value.toLocaleString()}</div>
-                                                    </div>
-                                                    <div className="text-sm text-slate-600 flex justify-between">
-                                                        <div className="truncate mr-4"><span className="font-semibold">{ustazLabel}:</span> {active === 'Takhassusat' ? (it.jamia || "-") : (it.ustaz || "-")}</div>
-                                                        <div><span className="font-semibold">Unit:</span> <span className="font-['Bebas_Neue'] font-bold text-lg text-indigo-600">{it.unit || "-"}</span></div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                            {data.items.length === 0 && !isLoading && <div className="text-sm text-slate-500 p-3 text-center">No valid rows found.</div>}
-                                        </div>
-                                    </div>
-                                </div>
+                               <RankingsView />
                             )}
                         </main>
 
