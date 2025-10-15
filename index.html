@@ -21,7 +21,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9; /* Slate 100 */
+            background-color: #f8fafc; /* Slate 50 */
         }
         /* Custom CSS for top 3 rows highlight animation */
         .highlight-pulse {
@@ -59,9 +59,25 @@
             transition: all 0.5s ease-in-out;
             will-change: transform, box-shadow;
         }
+        
+        /* NEW: Animation for the heading */
+        .heading-anim {
+            animation: float-pop 3s ease-in-out infinite;
+        }
+
+        @keyframes float-pop {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            50% {
+                transform: translateY(-8px) scale(1.05);
+                text-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            }
+        }
     </style>
 </head>
-<body class="bg-slate-100">
+<body class="bg-slate-50">
 
     <div id="root"></div>
     <!-- This div is for rendering the poster off-screen before download -->
@@ -159,7 +175,7 @@
             }, []);
 
             return (
-                <div className="text-sm font-medium text-slate-600 bg-slate-200 px-3 py-1 rounded-lg shadow-inner">
+                <div className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-lg shadow-inner">
                     {time.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
                 </div>
             );
@@ -341,6 +357,28 @@
             return new Intl.DateTimeFormat('en-IN', options).format(date).replace(',', '');
         }
 
+        const RANKING_VIEW_CONFIG = {
+            // Class Wise
+            "Ibtidaiya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Sale Awwal": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Sale Duwam": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Ula": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Saniya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Salisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Rabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Khamisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Sadisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Sabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Doratul Hadis": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Takhassusat": { nameLabel: "Jamia Name", categoryLabel: "Class", nameColCandidates: JAMIA_CANDIDATES, categoryColCandidates: USTAZ_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            // Jamia/Overall Wise
+            "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+            "Division": { nameLabel: "Name", categoryLabel: "Division", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: DIVISION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+            "State": { nameLabel: "Name", categoryLabel: "State", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: STATE_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+            "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+        };
+
         // --- Reusable Poster Components ---
         
         const PodiumWinnerCard = ({ winner, rank }) => {
@@ -495,7 +533,12 @@
         const ListPoster = ({ data }) => {
             if (!data) return null;
             const { className, winners, date, title } = data;
-            const isTakhassusat = className === 'Takhassusat';
+            
+            // Get labels from the central config to ensure they are always correct
+            const viewConfig = RANKING_VIEW_CONFIG[className] || {};
+            const nameLabel = viewConfig.nameLabel || 'Ustaz Name';
+            const categoryLabel = viewConfig.categoryLabel || 'Jamia Name';
+
             const subTitle = title.replace('TELETHON 2025 ', '') + (title.includes('FULL LIST') ? '' : ' WINNERS');
 
             return (
@@ -518,7 +561,7 @@
                     <div style={{ flexGrow: 1 }}>
                          <div style={{
                             display: 'grid',
-                            gridTemplateColumns: '80px 220px 1fr 200px',
+                            gridTemplateColumns: '80px 1fr 1fr 200px', // Adjusted grid for better spacing
                             alignItems: 'center',
                             gap: '16px',
                             padding: '12px 16px',
@@ -530,8 +573,8 @@
                             marginBottom: '12px'
                         }}>
                             <span>Rank</span>
-                            <span>{isTakhassusat ? 'Jamia Name' : 'Ustaz Name'}</span>
-                            <span style={{ textAlign: 'center' }}>{isTakhassusat ? 'Class' : 'Jamia Name'}</span>
+                            <span>{nameLabel}</span>
+                            <span style={{ textAlign: 'center' }}>{categoryLabel}</span>
                             <span style={{ textAlign: 'right' }}>Unit</span>
                         </div>
 
@@ -548,7 +591,7 @@
                                 return (
                                     <div key={winner.__id || idx} style={{
                                         display: 'grid',
-                                        gridTemplateColumns: '80px 220px 1fr 200px',
+                                        gridTemplateColumns: '80px 1fr 1fr 200px', // Adjusted grid
                                         alignItems: 'center',
                                         gap: '16px',
                                         padding: '12px 16px',
@@ -559,9 +602,9 @@
                                         fontWeight: 500
                                     }}>
                                         <span style={{fontWeight: 'bold', fontSize: '24px'}}>{idx + 1}</span>
-                                        <span>{isTakhassusat ? winner.jamia : winner.ustaz}</span>
+                                        <span style={{ fontWeight: 'bold' }}>{winner.name}</span>
                                         <span style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                                            {medalForIndex(idx)} {isTakhassusat ? winner.ustaz : winner.jamia}
+                                            {medalForIndex(idx)} {winner.category}
                                         </span>
                                         <span style={{ 
                                             textAlign: 'right', 
@@ -606,7 +649,7 @@
                     <div style={{ flexGrow: 1 }}>
                          <div style={{
                             display: 'grid',
-                            gridTemplateColumns: '80px 1fr 200px 200px',
+                            gridTemplateColumns: '80px 1fr 200px',
                             alignItems: 'center',
                             gap: '16px',
                             padding: '12px 16px',
@@ -620,7 +663,6 @@
                             <span>Rank</span>
                             <span>Class Name</span>
                             <span style={{ textAlign: 'right' }}>Unit</span>
-                            <span style={{ textAlign: 'right' }}>Total Amount</span>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -636,7 +678,7 @@
                                 return (
                                     <div key={winner.className} style={{
                                         display: 'grid',
-                                        gridTemplateColumns: '80px 1fr 200px 200px',
+                                        gridTemplateColumns: '80px 1fr 200px',
                                         alignItems: 'center',
                                         gap: '16px',
                                         padding: '12px 16px',
@@ -656,7 +698,6 @@
                                             fontSize: '28px',
                                             color: '#4f46e5'
                                         }}>{formatOverallUnit(winner.totalAmount)}</span>
-                                        <span style={{ textAlign: 'right', fontWeight: 'bold' }}>{winner.totalAmount.toLocaleString()}</span>
                                     </div>
                                 );
                             })}
@@ -709,8 +750,8 @@
             }
 
             return (
-                <div className="bg-white border rounded-lg p-4 shadow-lg relative">
-                    <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-6 text-center">Region Competition Scoreboard</h2>
+                <div className="bg-white border rounded-lg p-4 shadow-md relative">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">Region Competition Scoreboard</h2>
                     <div className="space-y-6">
                         {matchups.map(match => {
                             const scoreA = calculateScore(match.teamA);
@@ -718,18 +759,18 @@
                             const winner = scoreA > scoreB ? 'A' : (scoreB > scoreA ? 'B' : 'None');
 
                             return (
-                                <div key={match.id} className="bg-slate-50 border border-slate-200 p-3 md:p-4 rounded-2xl shadow-md transform hover:scale-105 transition-transform duration-300">
+                                <div key={match.id} className="bg-gray-50 border border-gray-200 p-3 md:p-4 rounded-2xl shadow-sm transform hover:scale-[1.02] transition-transform duration-300">
                                     <div className="md:hidden">
-                                        <div className={`flex justify-between items-center p-2 rounded-lg mb-2 ${winner === 'A' ? 'bg-green-50' : ''}`}>
-                                            <span className={`text-lg font-['Bowlby_One_SC'] uppercase ${winner === 'A' ? 'text-green-600' : 'text-slate-700'}`}>{match.teamA}</span>
-                                            <span className={`text-2xl font-['Bebas_Neue'] tracking-wider ${winner === 'A' ? 'text-green-500' : 'text-slate-500'}`}>
+                                        <div className={`flex justify-between items-center p-2 rounded-lg mb-2 ${winner === 'A' ? 'bg-green-100' : ''}`}>
+                                            <span className={`text-lg font-['Bowlby_One_SC'] uppercase ${winner === 'A' ? 'text-green-700' : 'text-gray-700'}`}>{match.teamA}</span>
+                                            <span className={`text-2xl font-['Bebas_Neue'] tracking-wider ${winner === 'A' ? 'text-green-600' : 'text-gray-600'}`}>
                                                 <AnimatedNumber value={scoreA} formatter={(val) => val.toFixed(1)} />
                                             </span>
                                         </div>
-                                        <div className="text-center text-slate-400 font-bold my-1 text-xl">VS</div>
-                                        <div className={`flex justify-between items-center p-2 rounded-lg ${winner === 'B' ? 'bg-green-50' : ''}`}>
-                                            <span className={`text-lg font-['Bowlby_One_SC'] uppercase ${winner === 'B' ? 'text-green-600' : 'text-slate-700'}`}>{match.teamB}</span>
-                                            <span className={`text-2xl font-['Bebas_Neue'] tracking-wider ${winner === 'B' ? 'text-green-500' : 'text-slate-500'}`}>
+                                        <div className="text-center text-gray-400 font-bold my-1 text-xl">VS</div>
+                                        <div className={`flex justify-between items-center p-2 rounded-lg ${winner === 'B' ? 'bg-green-100' : ''}`}>
+                                            <span className={`text-lg font-['Bowlby_One_SC'] uppercase ${winner === 'B' ? 'text-green-700' : 'text-gray-700'}`}>{match.teamB}</span>
+                                            <span className={`text-2xl font-['Bebas_Neue'] tracking-wider ${winner === 'B' ? 'text-green-600' : 'text-gray-600'}`}>
                                                 <AnimatedNumber value={scoreB} formatter={(val) => val.toFixed(1)} />
                                             </span>
                                         </div>
@@ -737,21 +778,21 @@
                                     
                                     <div className="hidden md:flex justify-around items-center text-center">
                                         <div className={`flex-1 flex flex-col items-center p-2 rounded-lg ${winner === 'A' ? 'font-extrabold' : ''}`}>
-                                            <div className={`text-xl md:text-2xl font-['Bowlby_One_SC'] uppercase ${winner === 'A' ? 'text-green-600' : 'text-slate-700'}`}>{match.teamA}</div>
-                                            <div className="text-xs text-slate-500">Region</div>
+                                            <div className={`text-xl md:text-2xl font-['Bowlby_One_SC'] uppercase ${winner === 'A' ? 'text-green-700' : 'text-gray-800'}`}>{match.teamA}</div>
+                                            <div className="text-xs text-gray-500">Region</div>
                                         </div>
                                         <div className="flex items-center">
-                                             <div className={`text-3xl md:text-5xl font-['Bebas_Neue'] p-2 rounded-lg tracking-wider ${winner === 'A' ? 'text-green-500' : 'text-slate-500'}`}>
+                                             <div className={`text-3xl md:text-5xl font-['Bebas_Neue'] p-2 rounded-lg tracking-wider ${winner === 'A' ? 'text-green-600' : 'text-gray-600'}`}>
                                                 <AnimatedNumber value={scoreA} formatter={(val) => val.toFixed(1)} />
                                              </div>
-                                             <div className="text-2xl md:text-4xl font-extrabold text-slate-400 mx-4">VS</div>
-                                             <div className={`text-3xl md:text-5xl font-['Bebas_Neue'] p-2 rounded-lg tracking-wider ${winner === 'B' ? 'text-green-500' : 'text-slate-500'}`}>
+                                             <div className="text-2xl md:text-4xl font-extrabold text-gray-400 mx-4">VS</div>
+                                             <div className={`text-3xl md:text-5xl font-['Bebas_Neue'] p-2 rounded-lg tracking-wider ${winner === 'B' ? 'text-green-600' : 'text-gray-600'}`}>
                                                  <AnimatedNumber value={scoreB} formatter={(val) => val.toFixed(1)} />
                                              </div>
                                         </div>
                                         <div className={`flex-1 flex flex-col items-center p-2 rounded-lg ${winner === 'B' ? 'font-extrabold' : ''}`}>
-                                             <div className={`text-xl md:text-2xl font-['Bowlby_One_SC'] uppercase ${winner === 'B' ? 'text-green-600' : 'text-slate-700'}`}>{match.teamB}</div>
-                                            <div className="text-xs text-slate-500">Region</div>
+                                             <div className={`text-xl md:text-2xl font-['Bowlby_One_SC'] uppercase ${winner === 'B' ? 'text-green-700' : 'text-gray-800'}`}>{match.teamB}</div>
+                                            <div className="text-xs text-gray-500">Region</div>
                                         </div>
                                     </div>
                                 </div>
@@ -815,28 +856,6 @@
             const [posterData, setPosterData] = useState(null);
             const [isDownloading, setIsDownloading] = useState(false);
             const posterContainerRef = useRef(null);
-
-             const RANKING_VIEW_CONFIG = {
-                // Class Wise
-                "Ibtidaiya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Sale Awwal": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Sale Duwam": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Ula": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Saniya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Salisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Rabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Khamisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Sadisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Sabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Doratul Hadis": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Takhassusat": { nameLabel: "Jamia Name", categoryLabel: "Class", nameColCandidates: JAMIA_CANDIDATES, categoryColCandidates: USTAZ_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-                // Jamia/Overall Wise
-                "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-                "Division": { nameLabel: "Name", categoryLabel: "Division", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: DIVISION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-                "State": { nameLabel: "Name", categoryLabel: "State", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: STATE_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-                "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-            };
 
             useEffect(() => {
                 posterContainerRef.current = document.getElementById('poster-container');
@@ -1191,9 +1210,9 @@
                  const { nameLabel, categoryLabel } = currentViewConfig;
 
                  return (
-                     <div className="bg-white border rounded-lg p-4 shadow-lg relative">
+                     <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-slate-700">Live Rankings</h2>
+                            <h2 className="text-xl font-bold text-gray-700">Live Rankings</h2>
                             <div className="flex items-center gap-2">
                                 {classesForTop10.includes(subActive) && (
                                     <>
@@ -1231,7 +1250,7 @@
                         {error && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-rose-600 mb-4 p-2 border border-rose-300 bg-rose-50 rounded-lg">Error: {error}</div>}
                         <div className={`relative ${showFullScreenLoader ? 'opacity-50 pointer-events-none' : ''}`}>
                             <div className="hidden md:block">
-                                <div className="grid grid-cols-10 items-center px-3 py-2 border-b text-sm font-semibold text-slate-700 bg-slate-50 rounded-t-lg">
+                                <div className="grid grid-cols-10 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
                                     <div className="col-span-1">Rank</div>
                                     <div className="col-span-3">{nameLabel}</div>
                                     <div className="col-span-4 text-center">{categoryLabel}</div>
@@ -1239,41 +1258,115 @@
                                 </div>
                                 <div className="space-y-1 mt-1">
                                     {data.items.map((it, idx) => {
-                                        const styleClass = idx === 0 ? "bg-yellow-50 border-yellow-300 shadow-md" : idx === 1 ? "bg-sky-50 border-sky-300" : idx === 2 ? "bg-emerald-50 border-emerald-300" : "bg-white border-transparent hover:bg-slate-50";
+                                        const styleClass = idx === 0 ? "bg-amber-50 border-amber-200 shadow-md" : idx === 1 ? "bg-gray-50 border-gray-200" : idx === 2 ? "bg-orange-50 border-orange-200" : "bg-white border-transparent hover:bg-gray-50";
+                                        
+                                        const diffBehind = idx < data.items.length - 1 ? it.__value - data.items[idx + 1].__value : null;
+                                        const diffAhead = idx > 0 ? data.items[idx - 1].__value - it.__value : null;
+
+                                        const formatDiff = (diff) => {
+                                            if (diff === null) return null;
+                                            let unitDiff;
+                                            if (currentViewConfig.valueIsUnit) {
+                                                unitDiff = diff;
+                                            } else {
+                                                unitDiff = diff / UNIT_DIVISOR;
+                                            }
+                                            if (unitDiff > -0.05 && unitDiff < 0.05) return "0.0";
+                                            return unitDiff.toFixed(1);
+                                        }
+
+                                        const formattedDiffBehind = formatDiff(diffBehind);
+                                        const formattedDiffAhead = formatDiff(diffAhead);
+
                                         return (
                                             <div key={it.__id} className={`grid grid-cols-10 items-center gap-4 p-3 rounded-lg transition-all duration-600 ${styleClass} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
-                                                <div className="col-span-1 font-bold text-lg">{idx + 1}</div>
-                                                <div className="col-span-3 text-left text-sm font-medium">{it.name || "-"}</div>
-                                                <div className={`col-span-4 text-center font-bold ${idx === 0 ? 'text-xl' : 'text-lg'}`}><span className="inline-flex items-center gap-2">{medalForIndex(idx)}<span>{it.category}</span></span></div>
+                                                <div className="col-span-1 font-bold text-lg text-gray-800">{idx + 1}</div>
+                                                <div className="col-span-3 text-left text-sm">
+                                                    <p className="font-bold text-gray-700 truncate">{it.name || "-"}</p>
+                                                    <div className="text-xs flex items-center gap-3 mt-1">
+                                                        {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0 && (
+                                                            <span className="flex items-center text-blue-600 font-semibold" title={`Aage badhne ke liye ${formattedDiffAhead} units chahiye`}>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
+                                                                <span>+{formattedDiffAhead} to next</span>
+                                                            </span>
+                                                        )}
+                                                        {formattedDiffBehind !== null && parseFloat(formattedDiffBehind) > 0 && (
+                                                            <span className="flex items-center text-green-500" title={`Peeche wale se ${formattedDiffBehind} units aage`}>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7" /></svg>
+                                                                {formattedDiffBehind}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className={`col-span-4 text-center font-bold text-gray-800 ${idx === 0 ? 'text-xl' : 'text-lg'}`}><span className="inline-flex items-center gap-2">{medalForIndex(idx)}<span>{it.category}</span></span></div>
                                                 <div className="col-span-2 text-right text-3xl font-['Bebas_Neue'] text-indigo-600 tracking-wider">{it.unit || "-"}</div>
                                             </div>
                                         );
                                     })}
-                                    {data.items.length === 0 && !isLoading && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-slate-500 p-3 text-center">No valid rows found.</div>}
+                                    {data.items.length === 0 && !isLoading && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-gray-500 p-3 text-center">No valid rows found.</div>}
                                 </div>
                             </div>
                             <div className="md:hidden space-y-3">
-                                {data.items.map((it, idx) => (
-                                    <div key={it.__id} className={`p-4 rounded-lg shadow-sm border ${idx === 0 ? "bg-yellow-50 border-yellow-300" : "bg-white border-slate-200"} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
+                                {data.items.map((it, idx) => {
+                                    const diffBehind = idx < data.items.length - 1 ? it.__value - data.items[idx + 1].__value : null;
+                                    const diffAhead = idx > 0 ? data.items[idx - 1].__value - it.__value : null;
+
+                                    const formatDiff = (diff) => {
+                                        if (diff === null) return null;
+                                        let unitDiff;
+                                        if (currentViewConfig.valueIsUnit) {
+                                            unitDiff = diff;
+                                        } else {
+                                            unitDiff = diff / UNIT_DIVISOR;
+                                        }
+                                        if (unitDiff > -0.05 && unitDiff < 0.05) return "0.0";
+                                        return unitDiff.toFixed(1);
+                                    }
+
+                                    const formattedDiffBehind = formatDiff(diffBehind);
+                                    const formattedDiffAhead = formatDiff(diffAhead);
+                                    
+                                    return (
+                                    <div key={it.__id} className={`p-4 rounded-xl shadow-sm border ${idx === 0 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-200"} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <div className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                                <div className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                                     <span className="text-2xl">{idx + 1}.</span>
                                                     <span className="truncate max-w-[150px] sm:max-w-[200px]">{it.category}</span>
                                                     <span>{medalForIndex(idx)}</span>
                                                 </div>
-                                                <div className="text-sm text-slate-600 mt-1">
-                                                    <span className="font-semibold">{nameLabel}:</span> {it.name || "-"}
+                                                <div className="text-sm text-gray-600 mt-1">
+                                                    <span className="font-semibold">{nameLabel}:</span> <span className="font-bold">{it.name || "-"}</span>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <span className="font-['Bebas_Neue'] font-bold text-4xl text-indigo-600">{it.unit || "-"}</span>
-                                                <span className="block text-xs text-slate-500 -mt-1 font-semibold">UNITS</span>
+                                                <span className="block text-xs text-gray-500 -mt-1 font-semibold">UNITS</span>
                                             </div>
                                         </div>
+                                        { (formattedDiffAhead !== null || formattedDiffBehind !== null) && (
+                                            <div className="border-t border-gray-200 mt-3 pt-2 text-xs flex justify-between items-center">
+                                                <div className="w-1/2">
+                                                    {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0 && (
+                                                        <span className="flex items-center text-blue-600 font-semibold" title={`Aage badhne ke liye ${formattedDiffAhead} units chahiye`}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
+                                                            <span>+{formattedDiffAhead} to next</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="w-1/2 text-right">
+                                                    {formattedDiffBehind !== null && parseFloat(formattedDiffBehind) > 0 && (
+                                                        <span className="flex items-center justify-end text-green-600 font-medium" title={`Aage hai ${formattedDiffBehind} units se`}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7" /></svg>
+                                                             {formattedDiffBehind}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                ))}
-                                {data.items.length === 0 && !isLoading && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-slate-500 p-3 text-center">No valid rows found.</div>}
+                                )})}
+                                {data.items.length === 0 && !isLoading && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-gray-500 p-3 text-center">No valid rows found.</div>}
                             </div>
                         </div>
                     </div>
@@ -1281,7 +1374,7 @@
             }
 
             return (
-                <div className="min-h-screen bg-gray-50">
+                <div className="min-h-screen bg-slate-50">
                     {/* Poster component is rendered off-screen when needed */}
                     {posterData && posterData.type === 'podium3' && ReactDOM.createPortal(<Podium3Poster data={posterData} />, posterContainerRef.current)}
                     {posterData && posterData.type === 'podium5' && ReactDOM.createPortal(<Podium5Poster data={posterData} />, posterContainerRef.current)}
@@ -1291,10 +1384,14 @@
                     
                     <div className="max-w-7xl mx-auto p-4 sm:p-6">
                         <header className="mb-6 text-center">
-                            <h1 className="text-6xl sm:text-7xl font-['Bebas_Neue'] bg-clip-text text-transparent bg-gradient-to-r from-sky-500 to-indigo-600">
+                            <h1 className="text-6xl sm:text-7xl font-['Bebas_Neue'] bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">
                                 TELETHON 2025
                             </h1>
-                            <p className="text-sm text-slate-500 mt-1">Jamia-tul-Madina India Class/Jamia Wise Positions</p>
+                            <p className="text-lg sm:text-xl font-['Bebas_Neue'] text-gray-500 tracking-widest">Final Big Telethon Day</p>
+                            <h2 className="text-2xl sm:text-3xl font-['Bebas_Neue'] text-amber-500 tracking-widest mt-1 sm:mt-0 heading-anim">
+                                GREAT GRAND FINAL
+                            </h2>
+                            <p className="text-sm text-gray-500 mt-2">Jamia-tul-Madina India Class/Jamia Wise Positions</p>
                         </header>
 
                         <nav className="mb-4">
@@ -1303,7 +1400,7 @@
                                     <button
                                         key={opt}
                                         onClick={() => handleMainTabClick(opt)}
-                                        className={`px-4 py-2 rounded-full font-bold text-base shadow-sm focus:outline-none transition-all duration-300 transform hover:-translate-y-1 ${ mainActive === opt ? "bg-sky-600 text-white shadow-lg" : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:shadow-md" }`}
+                                        className={`px-4 py-2 rounded-full font-bold text-base shadow-sm focus:outline-none transition-all duration-300 transform hover:-translate-y-1 ${ mainActive === opt ? "bg-indigo-600 text-white shadow-lg" : "bg-white text-gray-800 border border-gray-200 hover:bg-gray-100 hover:shadow-md" }`}
                                     >
                                         <span>{opt}</span>
                                     </button>
@@ -1318,13 +1415,13 @@
                         </nav>
                         
                         {TAB_CONFIG[mainActive].subTabs.length > 0 && (
-                             <div className="mb-4 p-2 bg-slate-200 rounded-xl shadow-inner">
+                             <div className="mb-4 p-2 bg-indigo-50 rounded-xl">
                                 <div className="hidden md:flex flex-wrap gap-1 justify-center">
                                     {TAB_CONFIG[mainActive].subTabs.map((opt) => (
                                         <button
                                             key={opt}
                                             onClick={() => setSubActive(opt)}
-                                            className={`px-3 py-1.5 rounded-lg font-medium text-xs shadow-sm focus:outline-none transition-colors duration-200 ${ subActive === opt ? "bg-indigo-600 text-white shadow-md" : "bg-white text-slate-600 hover:bg-indigo-50" }`}
+                                            className={`px-3 py-1.5 rounded-lg font-medium text-xs shadow-sm focus:outline-none transition-colors duration-200 ${ subActive === opt ? "bg-indigo-500 text-white shadow-md" : "bg-white text-gray-700 hover:bg-indigo-100" }`}
                                         >
                                             <span>{opt}</span>
                                         </button>
@@ -1338,8 +1435,8 @@
                             </div>
                         )}
 
-                        <div className="flex flex-col items-center justify-center p-3 bg-indigo-50 rounded-xl shadow-md mb-4 border border-indigo-200">
-                            <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-900 text-center uppercase">{pageTitle}</h2>
+                        <div className="flex flex-col items-center justify-center p-3 bg-indigo-100 rounded-xl shadow-sm mb-4 border border-indigo-200">
+                            <h2 className="text-2xl font-['Bowlby_One_SC'] text-indigo-800 text-center uppercase">{pageTitle}</h2>
                         </div>
 
                         <main className="relative">
@@ -1355,9 +1452,9 @@
                             {mainActive === "Region Competition" ? (
                                 <RegionCompetitionView regionData={regionData} isLoading={isRegionLoading} error={regionError} />
                             ) : mainActive === "Overall Rank" && subActive === 'Class' ? (
-                                <div className="bg-white border rounded-lg p-4 shadow-lg relative">
+                                <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
                                     <div className="flex justify-between items-center mb-4 border-b pb-2">
-                                        <h2 className="text-xl md:text-2xl font-bold text-slate-800">All India Classic Rank</h2>
+                                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">All India Classic Rank</h2>
                                         <div className="flex items-center gap-2">
                                             <button 
                                                 onClick={handleDownloadOverallRankPoster}
@@ -1371,34 +1468,50 @@
                                         </div>
                                     </div>
                                     {rankError && <div className="text-sm text-rose-600 mb-4 p-2 border border-rose-300 bg-rose-50 rounded-lg">Error: {rankError}</div>}
-                                    <div className="hidden md:grid grid-cols-12 items-center px-3 py-2 border-b text-sm font-semibold text-slate-700 bg-slate-50 rounded-t-lg">
+                                    <div className="hidden md:grid grid-cols-10 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
                                         <div className="col-span-1">Rank</div>
-                                        <div className="col-span-5">Class Name</div>
-                                        <div className="col-span-3 text-center">Calculated Unit</div>
-                                        <div className="col-span-3 text-right">Total Amount</div>
+                                        <div className="col-span-6">Class Name</div>
+                                        <div className="col-span-3 text-right">Calculated Unit</div>
                                     </div>
                                     <div className="space-y-3 mt-1">
-                                        {overallRankData.map((item, idx) => (
-                                            <div key={item.className} className={`rank-item grid grid-cols-12 items-center p-3 md:p-4 rounded-xl shadow-sm border ${idx === 0 ? "bg-yellow-50 border-yellow-400 shadow-lg" : "bg-white border-slate-200 hover:shadow-md"}`}>
-                                                <div className="col-span-1 text-base md:text-2xl font-['Bebas_Neue'] text-center text-slate-800">{idx + 1}</div>
-                                                <div className="col-span-5 md:ml-4 flex-grow truncate">
-                                                    <div className={`text-base md:text-lg font-bold ${idx === 0 ? "text-yellow-700" : "text-slate-800"}`}>
+                                        {overallRankData.map((item, idx) => {
+                                            const diffBehind = idx < overallRankData.length - 1 ? item.totalAmount - overallRankData[idx + 1].totalAmount : null;
+                                            const diffAhead = idx > 0 ? overallRankData[idx - 1].totalAmount - item.totalAmount : null;
+
+                                            const formattedDiffBehind = diffBehind !== null ? (diffBehind / UNIT_DIVISOR).toFixed(1) : null;
+                                            const formattedDiffAhead = diffAhead !== null ? (diffAhead / UNIT_DIVISOR).toFixed(1) : null;
+
+                                            return (
+                                            <div key={item.className} className={`rank-item grid grid-cols-10 items-center p-3 md:p-4 rounded-xl shadow-sm border ${idx === 0 ? "bg-amber-50 border-amber-300 shadow-md" : "bg-white border-gray-200 hover:shadow-md"}`}>
+                                                <div className="col-span-1 text-base md:text-2xl font-['Bebas_Neue'] text-center text-gray-800">{idx + 1}</div>
+                                                <div className="col-span-6 md:ml-4 flex-grow truncate">
+                                                    <div className={`text-base md:text-lg font-bold ${idx === 0 ? "text-amber-700" : "text-gray-800"}`}>
                                                         {item.className}
                                                         <span className="ml-1 text-lg md:text-2xl">{medalForIndex(idx)}</span>
                                                     </div>
-                                                    {item.error ? <div className="text-xs text-rose-500 mt-1">Error: {item.error}</div> : <div className="hidden md:block text-xs text-slate-500">Class Rank</div>}
+                                                     <div className="text-xs flex items-center gap-3 mt-1">
+                                                        {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0 && (
+                                                            <span className="flex items-center text-blue-600 font-semibold" title={`Aage badhne ke liye ${formattedDiffAhead} units chahiye`}>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
+                                                                <span>+{formattedDiffAhead} to next</span>
+                                                            </span>
+                                                        )}
+                                                        {formattedDiffBehind !== null && parseFloat(formattedDiffBehind) > 0 && (
+                                                            <span className="flex items-center text-green-500" title={`Peeche wale se ${formattedDiffBehind} units aage`}>
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7" /></svg>
+                                                                {formattedDiffBehind}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {item.error && <div className="text-xs text-rose-500 mt-1">Error: {item.error}</div>}
                                                 </div>
-                                                <div className="col-span-3 text-center md:text-xl font-['Bebas_Neue'] text-indigo-500 tracking-wider">
-                                                    <span className="md:hidden text-xs text-slate-500 block mb-[-2px]">Unit</span>
+                                                <div className="col-span-3 text-right text-4xl md:text-3xl font-['Bebas_Neue'] text-indigo-600 tracking-wider">
+                                                     <span className="md:hidden text-xs text-gray-500 block -mt-1 font-semibold">UNIT</span>
                                                     {formatOverallUnit(item.totalAmount)}
                                                 </div>
-                                                <div className={`col-span-3 text-right md:text-2xl font-['Bebas_Neue'] ${idx === 0 ? "text-emerald-700" : "text-indigo-600"} tracking-wide min-w-[50px]`}>
-                                                    <span className="md:hidden text-xs text-slate-500 block mb-[-2px]">Amount</span>
-                                                    {item.totalAmount.toLocaleString()}
-                                                </div>
                                             </div>
-                                        ))}
-                                        {overallRankData.length === 0 && !isRankLoading && <div className="text-center p-4 text-slate-500">No data available.</div>}
+                                        )})}
+                                        {overallRankData.length === 0 && !isRankLoading && <div className="text-center p-4 text-gray-500">No data available.</div>}
                                     </div>
                                 </div>
                             ) : (
@@ -1406,7 +1519,7 @@
                             )}
                         </main>
 
-                        <footer className="mt-8 text-xs text-slate-500 text-center">Made with ❤️ — Majlis Talimi Umoor India</footer>
+                        <footer className="mt-8 text-xs text-gray-500 text-center">Made with ❤️ — Majlis Talimi Umoor India</footer>
                     </div>
                 </div>
             );
@@ -1418,4 +1531,6 @@
 
 </body>
 </html>
+
+
 
