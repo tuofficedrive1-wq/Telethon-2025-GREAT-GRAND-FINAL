@@ -14,10 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Fredoka+One&display=swap" rel="stylesheet">
-    <!-- html2canvas for poster download -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -80,10 +77,7 @@
 <body class="bg-slate-50">
 
     <div id="root"></div>
-    <!-- This div is for rendering the poster off-screen before download -->
-    <div id="poster-container" style={{ position: 'absolute', left: '-9999px', top: 0 }}></div>
-
-
+    
     <!-- React CDN -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -93,75 +87,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
         
-        // --- Utility Functions for Formatting and Animation ---
-
-        // Formatter for Currency
-        const formatCurrency = (amount) => {
-            // Round to nearest integer for clean animation and display
-            return '₹ ' + new Intl.NumberFormat('en-IN').format(Math.round(amount));
-        };
-
-        // Formatter for Unit (Used for individual class units, and Overall Rank)
-        const formatUnit = (amount) => {
-             if (typeof amount !== 'number' || amount < 0) return "0.0";
-             const units = amount / 7000; // Apply the new logic
-             return units.toFixed(1); // Show exactly 1 decimal place
-        }
-
-        // Formatter for Overall Rank Units (Kept for clarity, but logic is same as formatUnit)
-        const formatOverallUnit = (amount) => {
-             if (typeof amount !== 'number' || amount < 0) return "0.0";
-             const units = amount / 7000;
-             return units.toFixed(1); // Show exactly 1 decimal place
-        }
-
-
-        // Component for smooth number animation
-        const AnimatedNumber = ({ value, duration = 1500, formatter }) => {
-            const [displayValue, setDisplayValue] = useState(value);
-            const previousValueRef = useRef(value);
-
-            useEffect(() => {
-                let startTimestamp;
-                const startValue = previousValueRef.current || 0;
-                const endValue = value || 0;
-                
-                if (endValue === startValue) {
-                    setDisplayValue(endValue);
-                    return;
-                }
-
-                const step = (timestamp) => {
-                    if (!startTimestamp) startTimestamp = timestamp;
-                    const elapsed = timestamp - startTimestamp;
-                    const progress = Math.min(1, elapsed / duration);
-                    const easedProgress = 1 - Math.pow(1 - progress, 3); 
-                    const currentValue = startValue + (endValue - startValue) * easedProgress;
-                    setDisplayValue(currentValue);
-
-                    if (progress < 1) {
-                        requestAnimationFrame(step);
-                    } else {
-                        setDisplayValue(endValue); 
-                    }
-                };
-
-                const animationFrameId = requestAnimationFrame(step);
-
-                return () => {
-                    cancelAnimationFrame(animationFrameId);
-                    previousValueRef.current = endValue; 
-                };
-            }, [value, duration]);
-
-            useEffect(() => {
-                previousValueRef.current = value;
-            }, [value]);
-
-
-            return <span>{formatter(displayValue)}</span>;
-        };
-        
+        // --- Utility Functions ---
         // --- Live Clock Component ---
         const LiveClock = () => {
             const [time, setTime] = useState(new Date());
@@ -205,17 +131,11 @@
             "Division": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "DIVISION" },
             "State": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "STATE" },
             "Region": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "REGION" },
-
-            // Other Tabs
-            "Region Competition": { id: null, sheet: null }
         };
 
         const POLL_INTERVAL_MS = 5000;
         const LOCALSTORAGE_KEY = "telethone_sheet_overrides_enhanced_live";
-        const LAST_RESULTS_KEY = "telethone_last_results";
-        const LAST_FETCH_CYCLE_KEY = "telethone_last_fetch_cycle";
-        const UNIT_DIVISOR = 7000;
-
+        
         function parseSheetIdFromUrl(input) {
             if (!input) return null;
             input = input.trim();
@@ -290,16 +210,15 @@
             throw new Error("Failed to fetch sheet data after multiple retries.");
         }
 
-        const RANK_CANDIDATES = ["Rank", "S. R.", "S.R.", "S R", "Sr", "Serial", "S No", "S.No"];
         const USTAZ_CANDIDATES = ["Ustaz Name", "USTAZ NAME", "Ustaz", "Ustad", "Instructor", "Teacher", "Class"];
         const JAMIA_CANDIDATES = ["Jamia Name", "JAMIA NAME", "Jamia", "Jamiah"];
         const RAQAM_CANDIDATES = ["Raqam", "RAQAM", "Amount", "Value", "रकम", "राशि"];
         const UNIT_CANDIDATES = ["Unit", "UNIT", "Units"];
-        const REGION_CANDIDATES = ["Region", "REGION", "Zone"];
-        const PHOTO_CANDIDATES = ["Photo", "Image", "Pic", "Profile Picture"];
         const NAME_CANDIDATES = ["Name", "name"];
         const DIVISION_CANDIDATES = ["Division", "division"];
         const STATE_CANDIDATES = ["State", "state"];
+        const REGION_CANDIDATES = ["Region", "REGION", "Zone"];
+
 
         function findColumnByCandidates(cols, candidates) {
             const lower = cols.map((c) => (c || "").toLowerCase().trim());
@@ -316,16 +235,6 @@
             return null;
         }
 
-        function getGoogleDriveImageUrl(url) {
-            if (!url || typeof url !== 'string') return null;
-            const fileIdMatch = url.match(/[-\w]{25,}/);
-            if (fileIdMatch && fileIdMatch[0]) {
-                const fileId = fileIdMatch[0];
-                return `https://lh3.googleusercontent.com/d/${fileId}`;
-            }
-            return url;
-        }
-
         function medalForIndex(i) {
             if (i === 0) return "🥇";
             if (i === 1) return "🥈";
@@ -333,476 +242,37 @@
             return "";
         }
         
-        function parseNumericValue(value, isInteger = false) {
+        function parseNumericValue(value) {
             if (value === null || value === undefined || String(value).trim() === "") {
                 return NaN;
             }
             const cleaned = String(value).replace(/[^0-9.-]+/g, "");
             const n = Number(cleaned);
-            
-            if (Number.isNaN(n)) return NaN;
-            
-            return isInteger ? Math.round(n) : n;
-        }
-
-        function formatDateTimeForPoster(date) {
-            const options = {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: true
-            };
-            return new Intl.DateTimeFormat('en-IN', options).format(date).replace(',', '');
+            return Number.isNaN(n) ? NaN : n;
         }
 
         const RANKING_VIEW_CONFIG = {
             // Class Wise
-            "Ibtidaiya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Sale Awwal": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Sale Duwam": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Ula": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Saniya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Salisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Rabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Khamisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Sadisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Sabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Doratul Hadis": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Takhassusat": { nameLabel: "Jamia Name", categoryLabel: "Class", nameColCandidates: JAMIA_CANDIDATES, categoryColCandidates: USTAZ_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
-            "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Ibtidaiya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Sale Awwal": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Sale Duwam": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Ula": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Saniya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Salisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Rabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Khamisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Sadisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Sabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Doratul Hadis": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Takhassusat": { nameLabel: "Jamia Name", categoryLabel: "Class", nameColCandidates: JAMIA_CANDIDATES, categoryColCandidates: USTAZ_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
             // Jamia/Overall Wise
-            "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-            "Division": { nameLabel: "Name", categoryLabel: "Division", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: DIVISION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-            "State": { nameLabel: "Name", categoryLabel: "State", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: STATE_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-            "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-        };
-
-        // --- Reusable Poster Components ---
-        
-        const PodiumWinnerCard = ({ winner, rank }) => {
-            if (!winner) return null;
-
-            const styles = {
-                1: { cardWidth: '200px', marginBottom: '0', imageHeight: '200px' },
-                2: { cardWidth: '180px', marginBottom: '20px', imageHeight: '170px' },
-                3: { cardWidth: '180px', marginBottom: '20px', imageHeight: '170px' },
-                4: { cardWidth: '160px', marginBottom: '40px', imageHeight: '150px' },
-                5: { cardWidth: '160px', marginBottom: '40px', imageHeight: '150px' },
-                6: { cardWidth: '150px', marginBottom: '10px', imageHeight: '140px' },
-            };
-            const style = styles[rank] || styles[6];
-            const numericImageHeight = parseInt(style.imageHeight, 10);
-
-            const cardStyle = {
-                backgroundColor: '#ffffff', borderRadius: '12px', padding: '10px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)', position: 'relative', textAlign: 'center',
-                width: style.cardWidth,
-                marginBottom: style.marginBottom,
-            };
-            
-            const imageContainerStyle = {
-                height: style.imageHeight,
-                backgroundColor: '#bbdefb', borderRadius: '8px', margin: '10px 0', 
-                display: 'flex', position: 'relative', overflow: 'hidden'
-            };
-
-            return (
-                <div style={cardStyle}>
-                    <div style={{ position: 'absolute', top: '-20px', right: '10px', zIndex: 10 }}>
-                        <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 1 }}>
-                            <div style={{ content: '', position: 'absolute', width: '15px', height: '35px', background: '#1e88e5', top: '0', left: '-10px', transform: 'rotate(-35deg)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}></div>
-                            <div style={{ content: '', position: 'absolute', width: '15px', height: '35px', background: '#1e88e5', top: '0', left: '-3px', transform: 'rotate(35deg)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}></div>
-                        </div>
-                        <div style={{ width: '40px', height: '40px', background: '#1976d2', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontSize: '20px', fontWeight: 'bold', border: '3px solid white', position: 'relative', zIndex: 2 }}>{rank}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>
-                         <img src={winner.photoUrl || 'https://placehold.co/30x30/e0e0e0/ffffff?text=?'} style={{ width: '30px', height: '30px', backgroundColor: '#e0e0e0', borderRadius: '50%', objectFit: 'cover' }} />
-                    </div>
-                    <div style={imageContainerStyle}>
-                         <img src={winner.photoUrl || `https://placehold.co/${numericImageHeight}x${numericImageHeight}/bbdefb/ffffff?text=${encodeURIComponent(winner.jamia)}`} alt={winner.jamia} style={{width: '100%', height: '100%', objectFit: 'cover'}}/>
-                    </div>
-                    <div style={{ marginTop: '10px', color: '#212121', textAlign: 'center' }}>
-                        <div style={{ fontWeight: 'bold', fontSize: '16px' }}>{winner.ustaz}</div>
-                        <div style={{ fontSize: '14px', color: '#616161' }}>{winner.jamia}</div>
-                    </div>
-                </div>
-            );
+            "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
+            "Division": { nameLabel: "Name", categoryLabel: "Division", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: DIVISION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
+            "State": { nameLabel: "Name", categoryLabel: "State", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: STATE_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
+            "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
         };
         
-        const PosterLayout = ({ children, width = '800px', height = '800px' }) => (
-            <div id="poster-to-download" style={{
-                width, height, background: 'linear-gradient(to bottom, #fdeec9, #e0f7fa)',
-                position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', padding: '40px', boxSizing: 'border-box', fontFamily: "'Poppins', sans-serif"
-            }}>
-                <svg style={{position: 'absolute', width: '100px', height: '100px', top: '20px', left: '-20px', transform: 'rotate(-15deg)', opacity: 0.8}} viewBox="0 0 1024 1024" fill="#4fc3f7"><path d="M853.333333 85.333333H170.666667c-47.146667 0-85.333333 38.186667-85.333334 85.333334v426.666666c0 47.146667 38.186667 85.333333 85.333334 85.333334h469.333333L853.333333 853.333333V170.666667c0-47.146667-38.186667-85.333333-85.333333-85.333334z" /></svg>
-                <svg style={{position: 'absolute', width: '100px', height: '100px', top: '60px', right: '-10px', transform: 'rotate(15deg)', opacity: 0.8}} viewBox="0 0 1024 1024" fill="#4fc3f7"><path d="M810.666667 128l170.666666 213.333333-170.666666 213.333334V426.666667H597.333333c0-141.653333-114.346667-256-256-256V85.333333c232.533333 0 426.666667 184.96 426.666667 416.853334h34.133333v-374.186667z" /></svg>
-                <svg style={{position: 'absolute', width: '100px', height: '100px', bottom: '80px', left: '10px', opacity: 0.8}} viewBox="0 0 1024 1024" fill="#81c784"><path d="M896 426.666667c0-29.013333-23.466667-52.48-52.48-52.48H629.333333V160c0-47.146667-38.186667-85.333333-85.333333-85.333333h-85.333333c-30.293333 0-56.32 16.64-71.253334 40.96C372.48 136.533333 362.666667 160 362.666667 192v182.666667H180.48c-29.013333 0-52.48 23.466667-52.48 52.48v427.52c0 29.013333 23.466667 52.48 52.48 52.48h663.04c29.013333 0 52.48-23.466667 52.48-52.48V426.666667z" /></svg>
-                {children}
-            </div>
-        );
-        
-        const PosterHeader = ({ className, title }) => (
-             <div style={{ textAlign: 'center', marginBottom: '20px', zIndex: 5 }}>
-                <div style={{ backgroundColor: '#1e88e5', color: 'white', padding: '8px 25px', borderRadius: '20px', fontSize: '18px', fontWeight: 'bold', display: 'inline-block', marginBottom: '10px', letterSpacing: '1px' }}>CONGREGATION</div>
-                <h1 style={{ fontFamily: "'Fredoka One', cursive", fontSize: '80px', fontWeight: 'bold', color: '#1565c0', margin: 0, lineHeight: 1 }}>TELETHON-2025</h1>
-                <h2 style={{ color: '#546e7a', fontSize: '28px', fontWeight: 'bold', marginTop: '15px', letterSpacing: '1px' }}>{title}</h2>
-                <h3 style={{ fontFamily: "'Bowlby One SC', cursive", color: '#1e88e5', fontSize: '48px', margin: '10px 0 20px 0', textTransform: 'uppercase' }}>{className}</h3>
-            </div>
-        );
-        
-        const PosterFooter = ({ date }) => (
-             <div style={{ position: 'absolute', bottom: '30px', width: 'calc(100% - 80px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1565c0', fontWeight: 'bold', fontSize: '16px', zIndex: 5 }}>
-                <span>MAJLIS TALIMI UMOOR INDIA</span>
-                <span>{date}</span>
-            </div>
-        );
-
-        const Podium3Poster = ({ data }) => {
-            if (!data) return null;
-            const { className, winners, date } = data;
-            
-            const sortedWinners = [...winners].sort((a, b) => b.__value - a.__value);
-            const winnerMap = {
-                first: sortedWinners[0],
-                second: sortedWinners[1],
-                third: sortedWinners[2]
-            };
-            
-            return (
-                <PosterLayout>
-                    <PosterHeader className={className} title="TOP 3 WINNERS" />
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: '20px', width: '100%', flex: 1 }}>
-                        <PodiumWinnerCard winner={winnerMap.second} rank={2} />
-                        <PodiumWinnerCard winner={winnerMap.first} rank={1} />
-                        <PodiumWinnerCard winner={winnerMap.third} rank={3} />
-                    </div>
-                    <PosterFooter date={date} />
-                </PosterLayout>
-            );
-        };
-        
-        const Podium5Poster = ({ data }) => {
-            if (!data) return null;
-            const { className, winners, date } = data;
-            
-            const sortedWinners = [...winners].sort((a, b) => b.__value - a.__value);
-            const winnerMap = {
-                first: sortedWinners[0],
-                second: sortedWinners[1],
-                third: sortedWinners[2],
-                fourth: sortedWinners[3],
-                fifth: sortedWinners[4],
-            };
-            
-            return (
-                 <PosterLayout width="1200px">
-                    <PosterHeader className={className} title="TOP 5 WINNERS" />
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: '15px', width: '100%', flex: 1 }}>
-                        <PodiumWinnerCard winner={winnerMap.fourth} rank={4} />
-                        <PodiumWinnerCard winner={winnerMap.second} rank={2} />
-                        <PodiumWinnerCard winner={winnerMap.first} rank={1} />
-                        <PodiumWinnerCard winner={winnerMap.third} rank={3} />
-                        <PodiumWinnerCard winner={winnerMap.fifth} rank={5} />
-                    </div>
-                    <PosterFooter date={date} />
-                </PosterLayout>
-            );
-        };
-
-        const Podium10Poster = ({ data }) => {
-            if (!data) return null;
-            const { className, winners, date } = data;
-            const sortedWinners = [...winners].sort((a, b) => b.__value - a.__value);
-
-            return (
-                 <PosterLayout width="1920px" height="1080px">
-                    <PosterHeader className={className} title="TOP 10 WINNERS" />
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '20px', width: '100%', justifyContent: 'center' }}>
-                        {sortedWinners.map((winner, idx) => (
-                           <PodiumWinnerCard key={idx} winner={winner} rank={idx + 1} />
-                        ))}
-                    </div>
-                    <PosterFooter date={date} />
-                </PosterLayout>
-            );
-        };
-        
-        const ListPoster = ({ data }) => {
-            if (!data) return null;
-            const { className, winners, date, title } = data;
-            
-            // Get labels from the central config to ensure they are always correct
-            const viewConfig = RANKING_VIEW_CONFIG[className] || {};
-            const nameLabel = viewConfig.nameLabel || 'Ustaz Name';
-            const categoryLabel = viewConfig.categoryLabel || 'Jamia Name';
-
-            const subTitle = title.replace('TELETHON 2025 ', '') + (title.includes('FULL LIST') ? '' : ' WINNERS');
-
-            return (
-                <div id="poster-to-download" style={{
-                    width: '1200px',
-                    height: 'auto',
-                    minHeight: '675px',
-                    padding: '32px',
-                    background: 'linear-gradient(135deg, #f0f9ff, #eef2ff)',
-                    fontFamily: "'Inter', sans-serif",
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}>
-                    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                        <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '72px', color: '#1e3a8a', letterSpacing: '2px', margin: 0 }}>TELETHON 2025</h1>
-                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '48px', color: '#6366f1', letterSpacing: '2px', margin: '-10px 0 0 0' }}>{subTitle}</p>
-                        <h2 style={{ fontFamily: "'Bowlby One SC', cursive", fontSize: '60px', color: '#0ea5e9', textTransform: 'uppercase', margin: 0 }}>{className}</h2>
-                    </div>
-                    
-                    <div style={{ flexGrow: 1 }}>
-                         <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '80px 1fr 1fr 200px', // Adjusted grid for better spacing
-                            alignItems: 'center',
-                            gap: '16px',
-                            padding: '12px 16px',
-                            background: '#dbeafe',
-                            borderRadius: '12px',
-                            fontWeight: 'bold',
-                            fontSize: '20px',
-                            color: '#1e3a8a',
-                            marginBottom: '12px'
-                        }}>
-                            <span>Rank</span>
-                            <span>{nameLabel}</span>
-                            <span style={{ textAlign: 'center' }}>{categoryLabel}</span>
-                            <span style={{ textAlign: 'right' }}>Unit</span>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {winners.map((winner, idx) => {
-                                const rankColors = [
-                                    'rgba(252, 211, 77, 0.3)', // Gold
-                                    'rgba(192, 192, 192, 0.3)', // Silver
-                                    'rgba(205, 127, 50, 0.3)'  // Bronze
-                                ];
-                                const bgColor = idx < 3 ? rankColors[idx] : 'rgba(255,255,255,0.7)';
-                                const textColor = '#1e293b';
-
-                                return (
-                                    <div key={winner.__id || idx} style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: '80px 1fr 1fr 200px', // Adjusted grid
-                                        alignItems: 'center',
-                                        gap: '16px',
-                                        padding: '12px 16px',
-                                        background: bgColor,
-                                        borderRadius: '12px',
-                                        fontSize: '22px',
-                                        color: textColor,
-                                        fontWeight: 500
-                                    }}>
-                                        <span style={{fontWeight: 'bold', fontSize: '24px'}}>{idx + 1}</span>
-                                        <span style={{ fontWeight: 'bold' }}>{winner.name}</span>
-                                        <span style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                                            {medalForIndex(idx)} {winner.category}
-                                        </span>
-                                        <span style={{ 
-                                            textAlign: 'right', 
-                                            fontFamily: "'Bebas Neue', cursive",
-                                            fontSize: '36px',
-                                            color: '#4f46e5'
-                                        }}>{winner.unit}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                    
-                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '2px solid #dbeafe'}}>
-                        <p style={{ color: '#475569', fontSize: '18px', fontWeight: '600' }}>Majlis Talimi Umoor India</p>
-                        <p style={{ color: '#475569', fontSize: '18px', fontWeight: '600' }}>Date: {date}</p>
-                    </div>
-                </div>
-            );
-        };
-
-        const OverallRankPoster = ({ data }) => {
-            if (!data) return null;
-            const { winners, date } = data;
-
-            return (
-                <div id="poster-to-download" style={{
-                    width: '1200px',
-                    height: 'auto',
-                    minHeight: '675px',
-                    padding: '32px',
-                    background: 'linear-gradient(135deg, #e0f2fe, #f5f3ff)',
-                    fontFamily: "'Inter', sans-serif",
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}>
-                    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                        <h1 style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '72px', color: '#1e3a8a', letterSpacing: '2px', margin: 0 }}>TELETHON 2025</h1>
-                        <p style={{ fontFamily: "'Bebas Neue', cursive", fontSize: '48px', color: '#6366f1', letterSpacing: '2px', margin: '-10px 0 0 0' }}>ALL INDIA CLASSIC RANK</p>
-                    </div>
-
-                    <div style={{ flexGrow: 1 }}>
-                         <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '80px 1fr 200px',
-                            alignItems: 'center',
-                            gap: '16px',
-                            padding: '12px 16px',
-                            background: '#dbeafe',
-                            borderRadius: '12px',
-                            fontWeight: 'bold',
-                            fontSize: '20px',
-                            color: '#1e3a8a',
-                            marginBottom: '12px'
-                        }}>
-                            <span>Rank</span>
-                            <span>Class Name</span>
-                            <span style={{ textAlign: 'right' }}>Unit</span>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {winners.map((winner, idx) => {
-                                const rankColors = [
-                                    'rgba(252, 211, 77, 0.3)', // Gold
-                                    'rgba(192, 192, 192, 0.3)', // Silver
-                                    'rgba(205, 127, 50, 0.3)'  // Bronze
-                                ];
-                                const bgColor = idx < 3 ? rankColors[idx] : 'rgba(255,255,255,0.7)';
-                                const textColor = '#1e293b';
-
-                                return (
-                                    <div key={winner.className} style={{
-                                        display: 'grid',
-                                        gridTemplateColumns: '80px 1fr 200px',
-                                        alignItems: 'center',
-                                        gap: '16px',
-                                        padding: '12px 16px',
-                                        background: bgColor,
-                                        borderRadius: '12px',
-                                        fontSize: '22px',
-                                        color: textColor,
-                                        fontWeight: 500
-                                    }}>
-                                        <span style={{fontWeight: 'bold', fontSize: '24px'}}>{idx + 1}</span>
-                                        <span style={{ fontWeight: 'bold' }}>
-                                            {medalForIndex(idx)} {winner.className}
-                                        </span>
-                                        <span style={{
-                                            textAlign: 'right',
-                                            fontFamily: "'Bebas Neue', cursive",
-                                            fontSize: '28px',
-                                            color: '#4f46e5'
-                                        }}>{formatOverallUnit(winner.totalAmount)}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '2px solid #dbeafe'}}>
-                        <p style={{ color: '#475569', fontSize: '18px', fontWeight: '600' }}>Majlis Talimi Umoor India</p>
-                        <p style={{ color: '#475569', fontSize: '18px', fontWeight: '600' }}>Date: {date}</p>
-                    </div>
-                </div>
-            );
-        };
-        
-        // --- Region Competition Component ---
-        const RegionCompetitionView = ({ regionData, isLoading, error }) => {
-            const getUnit = (regionName) => {
-                 if (!regionName) return 0;
-                 const regionNames = Object.keys(regionData);
-                 const actualRegionName = regionNames.find(name => name.toLowerCase() === regionName.toLowerCase());
-                 return regionData[actualRegionName]?.totalUnit || 0;
-            };
-
-            const matchups = [
-                { id: 1, teamA: 'Ajmer', teamB: 'Dehli' },
-                { id: 2, teamA: 'Mumbai', teamB: 'HYDERABAD & BENGALORE' },
-                { id: 3, teamA: 'Kolkata', teamB: 'HYDERABAD' }
-            ];
-
-            const calculateScore = (teamName) => {
-                if (teamName === 'HYDERABAD & BENGALORE') {
-                    return getUnit('HYDERABAD') + getUnit('BENGALORE');
-                }
-                return getUnit(teamName);
-            };
-            
-            if (isLoading && Object.keys(regionData).length === 0) {
-                 return (
-                    <div className="flex justify-center items-center p-10">
-                        <div className="loader w-10 h-10 border-t-sky-500 border-4"></div>
-                        <span className="ml-4 text-slate-500">Region data load ho raha hai...</span>
-                    </div>
-                );
-            }
-
-            if (error) return <div className="text-center p-4 text-rose-600">{error}</div>;
-            
-            if (Object.keys(regionData).length === 0 && !isLoading) {
-                 return <div className="text-center p-10 text-slate-500">Koi region data nahi mila. Sheets mein 'Region' column check karein.</div>;
-            }
-
-            return (
-                <div className="bg-white border rounded-lg p-4 shadow-md relative">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">Region Competition Scoreboard</h2>
-                    <div className="space-y-6">
-                        {matchups.map(match => {
-                            const scoreA = calculateScore(match.teamA);
-                            const scoreB = calculateScore(match.teamB);
-                            const winner = scoreA > scoreB ? 'A' : (scoreB > scoreA ? 'B' : 'None');
-
-                            return (
-                                <div key={match.id} className="bg-gray-50 border border-gray-200 p-3 md:p-4 rounded-2xl shadow-sm transform hover:scale-[1.02] transition-transform duration-300">
-                                    <div className="md:hidden">
-                                        <div className={`flex justify-between items-center p-2 rounded-lg mb-2 ${winner === 'A' ? 'bg-green-100' : ''}`}>
-                                            <span className={`text-lg font-['Bowlby_One_SC'] uppercase ${winner === 'A' ? 'text-green-700' : 'text-gray-700'}`}>{match.teamA}</span>
-                                            <span className={`text-2xl font-['Bebas_Neue'] tracking-wider ${winner === 'A' ? 'text-green-600' : 'text-gray-600'}`}>
-                                                <AnimatedNumber value={scoreA} formatter={(val) => val.toFixed(1)} />
-                                            </span>
-                                        </div>
-                                        <div className="text-center text-gray-400 font-bold my-1 text-xl">VS</div>
-                                        <div className={`flex justify-between items-center p-2 rounded-lg ${winner === 'B' ? 'bg-green-100' : ''}`}>
-                                            <span className={`text-lg font-['Bowlby_One_SC'] uppercase ${winner === 'B' ? 'text-green-700' : 'text-gray-700'}`}>{match.teamB}</span>
-                                            <span className={`text-2xl font-['Bebas_Neue'] tracking-wider ${winner === 'B' ? 'text-green-600' : 'text-gray-600'}`}>
-                                                <AnimatedNumber value={scoreB} formatter={(val) => val.toFixed(1)} />
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="hidden md:flex justify-around items-center text-center">
-                                        <div className={`flex-1 flex flex-col items-center p-2 rounded-lg ${winner === 'A' ? 'font-extrabold' : ''}`}>
-                                            <div className={`text-xl md:text-2xl font-['Bowlby_One_SC'] uppercase ${winner === 'A' ? 'text-green-700' : 'text-gray-800'}`}>{match.teamA}</div>
-                                            <div className="text-xs text-gray-500">Region</div>
-                                        </div>
-                                        <div className="flex items-center">
-                                             <div className={`text-3xl md:text-5xl font-['Bebas_Neue'] p-2 rounded-lg tracking-wider ${winner === 'A' ? 'text-green-600' : 'text-gray-600'}`}>
-                                                <AnimatedNumber value={scoreA} formatter={(val) => val.toFixed(1)} />
-                                             </div>
-                                             <div className="text-2xl md:text-4xl font-extrabold text-gray-400 mx-4">VS</div>
-                                             <div className={`text-3xl md:text-5xl font-['Bebas_Neue'] p-2 rounded-lg tracking-wider ${winner === 'B' ? 'text-green-600' : 'text-gray-600'}`}>
-                                                 <AnimatedNumber value={scoreB} formatter={(val) => val.toFixed(1)} />
-                                             </div>
-                                        </div>
-                                        <div className={`flex-1 flex flex-col items-center p-2 rounded-lg ${winner === 'B' ? 'font-extrabold' : ''}`}>
-                                             <div className={`text-xl md:text-2xl font-['Bowlby_One_SC'] uppercase ${winner === 'B' ? 'text-green-700' : 'text-gray-800'}`}>{match.teamB}</div>
-                                            <div className="text-xs text-gray-500">Region</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            );
-        };
-
         function TelethoneEnhancedLive() {
             const TAB_CONFIG = {
                 "Class Wise Rank": {
@@ -812,9 +282,6 @@
                 "Overall Rank": { 
                     subTabs: ["Class", "Jamia", "Division", "State", "Region"],
                     defaultSubTab: "Class",
-                },
-                "Region Competition": { 
-                    subTabs: [],
                 }
             };
 
@@ -850,135 +317,11 @@
             const [isRankLoading, setRankLoading] = useState(true);
             const [isRankDataLoaded, setIsRankDataLoaded] = useState(false);
             const [rankError, setRankError] = useState(null);
-            const [regionData, setRegionData] = useState({});
-            const [isRegionLoading, setRegionLoading] = useState(true);
-            const [regionError, setRegionError] = useState(null);
-            const [posterData, setPosterData] = useState(null);
-            const [isDownloading, setIsDownloading] = useState(false);
-            const posterContainerRef = useRef(null);
 
             useEffect(() => {
-                posterContainerRef.current = document.getElementById('poster-container');
                 loadOverallRank();
-                loadRegionData();
             }, []);
             
-            // Poster Generation Effect
-            useEffect(() => {
-                if (!posterData) return;
-
-                const generateImage = async () => {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    const element = document.getElementById('poster-to-download');
-                    if(element && window.html2canvas) {
-                        try {
-                            const canvas = await html2canvas(element, { useCORS: true, scale: 2 });
-                            const dataUrl = canvas.toDataURL('image/png');
-                            
-                            if (posterData.type === 'pdf') {
-                                const { jsPDF } = window.jspdf;
-                                const pdf = new jsPDF({
-                                    orientation: 'p',
-                                    unit: 'px',
-                                    format: [canvas.width, canvas.height]
-                                });
-                                pdf.addImage(dataUrl, 'PNG', 0, 0, canvas.width, canvas.height);
-                                pdf.save('Telethone-Results-Summary.pdf');
-                            } else {
-                                const link = document.createElement('a');
-                                link.href = dataUrl;
-                                link.download = `Telethone-Winners-${posterData.className.replace(/\s+/g, '-')}.png`;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                            }
-
-                        } catch(err) {
-                             console.error("Error generating poster:", err);
-                             alert("Poster download karne mein error aaya. Koshish karein ki photo links sahi hon.");
-                        } finally {
-                             setPosterData(null);
-                             setIsDownloading(false);
-                        }
-                    }
-                };
-                
-                generateImage();
-
-            }, [posterData]);
-
-            const handleDownloadTop3PodiumPoster = (className, winners) => {
-                 setIsDownloading(true);
-                 const now = formatDateTimeForPoster(new Date());
-                 const top3Winners = winners.slice(0, 3);
-                 setPosterData({ type: 'podium3', className, winners: top3Winners, date: now });
-            };
-
-            const handleDownloadTop5PodiumPoster = (className, winners) => {
-                const now = formatDateTimeForPoster(new Date());
-                setIsDownloading(true);
-                const topWinners = winners.slice(0, 5);
-                setPosterData({
-                    type: 'podium5',
-                    className: className,
-                    winners: topWinners,
-                    date: now,
-                });
-            };
-
-            const handleDownloadTop10PodiumPoster = (className, winners) => {
-                const now = formatDateTimeForPoster(new Date());
-                setIsDownloading(true);
-                const topWinners = winners.slice(0, 10);
-                setPosterData({
-                    type: 'podium10',
-                    className: className,
-                    winners: topWinners,
-                    date: now,
-                });
-            };
-
-            const handleDownloadClassPoster = (count, className, winners) => {
-                const now = formatDateTimeForPoster(new Date());
-                
-                setIsDownloading(true);
-                const winnerList = (winners || data.items).slice(0, count);
-                setPosterData({ 
-                    type: 'list', 
-                    className: className || subActive, 
-                    winners: winnerList, 
-                    date: now, 
-                    title: `TELETHON 2025 TOP ${count}` 
-                });
-            };
-
-            const handleDownloadFullListPoster = () => {
-                const now = formatDateTimeForPoster(new Date());
-                
-                setIsDownloading(true);
-                const winners = data.items;
-                setPosterData({ 
-                    type: 'list', 
-                    className: subActive, 
-                    winners, 
-                    date: now, 
-                    title: `TELETHON 2025 FULL LIST` 
-                });
-            };
-
-            const handleDownloadOverallRankPoster = () => {
-                if (overallRankData.length === 0) return;
-                const now = formatDateTimeForPoster(new Date());
-                setIsDownloading(true);
-                setPosterData({
-                    type: 'overall',
-                    className: 'Overall-Rank',
-                    winners: overallRankData,
-                    date: now,
-                    title: 'TELETHON 2025 ALL INDIA CLASSIC RANK'
-                });
-            };
-
             function getActiveConfig() {
                 const cfg = DEFAULT_SHEET_CONFIGS[subActive] || { id: "", sheet: "Sheet1" };
                 const id = overrides[subActive] ?? cfg.id ?? "";
@@ -1020,27 +363,12 @@
                     }
 
                     const parsed = rows
-                        .map((r, idx) => {
-                            const rawValue = r[valueCol];
-                            const n = parseNumericValue(rawValue);
-                            
-                            let unit, value;
-                            if (currentViewConfig.valueIsUnit) {
-                                unit = n.toFixed(1);
-                                value = n; // The value is the unit itself.
-                            } else {
-                                unit = formatUnit(n);
-                                value = n;
-                            }
-
-                            return { 
-                                __id: idx,
-                                name: String(r[nameCol] || "").trim(), 
-                                category: String(r[categoryCol] || "").trim(), 
-                                unit: unit,
-                                __value: value,
-                            };
-                        })
+                        .map((r, idx) => ({ 
+                            __id: idx,
+                            name: String(r[nameCol] || "").trim(), 
+                            category: String(r[categoryCol] || "").trim(), 
+                            __value: parseNumericValue(r[valueCol]),
+                        }))
                         .filter((x) => x.category !== "" && !Number.isNaN(x.__value));
 
                     parsed.sort((a, b) => b.__value - a.__value);
@@ -1070,12 +398,12 @@
                 const fetchPromises = sheetOptions.map(async (opt) => {
                     const cfg = DEFAULT_SHEET_CONFIGS[opt];
                     const id = overrides[opt] ?? cfg.id;
-                    if (!isValidSheetId(id)) return { className: opt, totalAmount: 0, totalUnit: 0, error: "Not Configured" };
+                    if (!isValidSheetId(id)) return { className: opt, totalAmount: 0, error: "Not Configured" };
 
                     try {
                         const { cols, items: rows } = await fetchSheetData(id, cfg.sheet);
                         const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
-                        if (!raqamCol) return { className: opt, totalAmount: 0, totalUnit: 0, error: "Missing Raqam Column" };
+                        if (!raqamCol) return { className: opt, totalAmount: 0, error: "Missing Raqam Column" };
                         
                         let totalAmount = 0;
                         rows.forEach((r) => {
@@ -1083,9 +411,9 @@
                             totalAmount += Number.isNaN(n) ? 0 : n;
                         });
                         
-                        return { className: opt, totalAmount, totalUnit: totalAmount / UNIT_DIVISOR, error: null };
+                        return { className: opt, totalAmount, error: null };
                     } catch (err) {
-                        return { className: opt, totalAmount: 0, totalUnit: 0, error: err.message };
+                        return { className: opt, totalAmount: 0, error: err.message };
                     }
                 });
 
@@ -1101,62 +429,12 @@
                 }
             }
             
-            async function loadRegionData() {
-                setRegionLoading(true);
-                setRegionError(null);
-                const sheetOptions = TAB_CONFIG["Class Wise Rank"].subTabs;
-                const regionTotals = {};
-
-                const fetchPromises = sheetOptions.map(async (opt) => {
-                    const cfg = DEFAULT_SHEET_CONFIGS[opt];
-                    const id = overrides[opt] ?? cfg.id;
-                    if (!isValidSheetId(id)) return;
-
-                    try {
-                        const { cols, items: rows } = await fetchSheetData(id, cfg.sheet);
-                        const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
-                        const regionCol = findColumnByCandidates(cols, REGION_CANDIDATES);
-
-                        if (!raqamCol || !regionCol) return;
-                        
-                        rows.forEach((r) => {
-                            const region = r[regionCol] ? String(r[regionCol]).trim() : null;
-                            const n = parseNumericValue(r[raqamCol]);
-                            if (region && !Number.isNaN(n)) {
-                                if (!regionTotals[region]) regionTotals[region] = 0;
-                                regionTotals[region] += n;
-                            }
-                        });
-                    } catch (err) {
-                        console.error(`Error fetching region data for ${opt}:`, err);
-                    }
-                });
-
-                try {
-                    await Promise.all(fetchPromises);
-                    const finalRegionData = {};
-                    for (const region in regionTotals) {
-                        finalRegionData[region] = {
-                            totalAmount: regionTotals[region],
-                            totalUnit: regionTotals[region] / UNIT_DIVISOR
-                        };
-                    }
-                    setRegionData(finalRegionData);
-                } catch (e) {
-                    setRegionError("Sabhi region data ko process nahi kiya ja saka.");
-                } finally {
-                    setRegionLoading(false);
-                }
-            }
-
             // This is the main polling/timer effect that controls what happens for each tab.
             useEffect(() => {
                 let pollId;
                 let actionToRun = () => {};
 
-                if (mainActive === 'Region Competition') {
-                    actionToRun = loadRegionData;
-                } else if (mainActive === 'Overall Rank' && subActive === 'Class') {
+                if (mainActive === 'Overall Rank' && subActive === 'Class') {
                     actionToRun = loadOverallRank;
                 } else {
                     actionToRun = loadActiveSheet;
@@ -1190,20 +468,9 @@
             const pageTitle = TAB_CONFIG[mainActive].subTabs.length > 0 ? subActive : mainActive;
 
             const showFullScreenLoader = (isLoading && !isDataLoaded) || 
-                                         (mainActive === "Overall Rank" && subActive === 'Class' && isRankLoading && !isRankDataLoaded) ||
-                                         (mainActive === "Region Competition" && isRegionLoading && Object.keys(regionData).length === 0);
+                                         (mainActive === "Overall Rank" && subActive === 'Class' && isRankLoading && !isRankDataLoaded);
             
-            const classesForTop10 = ["Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa"];
-            const classesForTop3 = ["Sadisa", "Sabia", "Doratul Hadis", "Takhassusat", "Darulifta Ahle Sunnat"];
-            const classesForFullList = ["Khamisa", "Sadisa", "Sabia", "Doratul Hadis", "Takhassusat", "Darulifta Ahle Sunnat"];
             
-            const DownloadIcon = () => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-                  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
-                </svg>
-            );
-
             const RankingsView = () => {
                  const currentViewConfig = RANKING_VIEW_CONFIG[subActive];
                  if (!currentViewConfig) return <div className="p-4 text-center text-rose-500">Error: No configuration found for {subActive}.</div>;
@@ -1213,28 +480,6 @@
                      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold text-gray-700">Live Rankings</h2>
-                            <div className="flex items-center gap-2">
-                                {classesForTop10.includes(subActive) && (
-                                    <>
-                                        <button onClick={() => handleDownloadClassPoster(5)} title="Download Top 5 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T5</span></>}
-                                        </button>
-                                        <button onClick={() => handleDownloadClassPoster(10)} title="Download Top 10 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                            {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T10</span></>}
-                                        </button>
-                                    </>
-                                )}
-                                 {classesForTop3.includes(subActive) && (
-                                     <button onClick={() => handleDownloadClassPoster(3)} title="Download Top 3 Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                        {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">T3</span></>}
-                                    </button>
-                                )}
-                                {classesForFullList.includes(subActive) && (
-                                    <button onClick={handleDownloadFullListPoster} title="Download Full List Poster" disabled={isDownloading || data.items.length === 0} className="p-2 text-white bg-purple-600 rounded-lg shadow-sm hover:bg-purple-700 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5">
-                                        {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <><DownloadIcon /> <span className="text-xs font-bold">FULL</span></>}
-                                    </button>
-                                )}
-                            </div>
                         </div>
                         {!isValidSheetId(getActiveConfig().id) && (
                             <div className="mb-4 p-4 border rounded-xl bg-yellow-50 border-yellow-200 text-center">
@@ -1299,12 +544,6 @@
 
             return (
                 <div className="min-h-screen bg-slate-50">
-                    {/* Poster component is rendered off-screen when needed */}
-                    {posterData && posterData.type === 'podium3' && ReactDOM.createPortal(<Podium3Poster data={posterData} />, posterContainerRef.current)}
-                    {posterData && posterData.type === 'podium5' && ReactDOM.createPortal(<Podium5Poster data={posterData} />, posterContainerRef.current)}
-                    {posterData && posterData.type === 'podium10' && ReactDOM.createPortal(<Podium10Poster data={posterData} />, posterContainerRef.current)}
-                    {posterData && posterData.type === 'list' && ReactDOM.createPortal(<ListPoster data={posterData} />, posterContainerRef.current)}
-                    {posterData && posterData.type === 'overall' && ReactDOM.createPortal(<OverallRankPoster data={posterData} />, posterContainerRef.current)}
                     
                     <div className="max-w-7xl mx-auto p-4 sm:p-6">
                         <header className="mb-6 text-center">
@@ -1373,23 +612,11 @@
                                 </div>
                             )}
 
-                            {mainActive === "Region Competition" ? (
-                                <RegionCompetitionView regionData={regionData} isLoading={isRegionLoading} error={regionError} />
-                            ) : mainActive === "Overall Rank" && subActive === 'Class' ? (
+                            {mainActive === "Overall Rank" && subActive === 'Class' ? (
                                 <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
                                     <div className="flex justify-between items-center mb-4 border-b pb-2">
                                         <h2 className="text-xl md:text-2xl font-bold text-gray-800">All India Classic Rank</h2>
-                                        <div className="flex items-center gap-2">
-                                            <button 
-                                                onClick={handleDownloadOverallRankPoster}
-                                                disabled={isDownloading || overallRankData.length === 0}
-                                                className="p-2 text-white bg-indigo-500 rounded-lg shadow-sm hover:bg-indigo-600 disabled:bg-slate-400 disabled:cursor-not-allowed flex items-center gap-1.5"
-                                                title="Download Overall Rank Poster"
-                                            >
-                                                {isDownloading ? <div className="loader !w-4 !h-4 !border-2 !border-t-white"></div> : <DownloadIcon />}
-                                            </button>
-                                            <LiveClock />
-                                        </div>
+                                        <LiveClock />
                                     </div>
                                     {rankError && <div className="text-sm text-rose-600 mb-4 p-2 border border-rose-300 bg-rose-50 rounded-lg">Error: {rankError}</div>}
                                     <div className="hidden md:grid grid-cols-7 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
