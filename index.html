@@ -128,8 +128,6 @@
             // Jamia/Overall Wise Rank
             "Class": { id: null, sheet: null }, // This is for the overall class rank view, not a sheet
             "Jamia": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "JAMIA" },
-            "Division": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "DIVISION" },
-            "State": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "STATE" },
             "Region": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "REGION" },
         };
 
@@ -268,8 +266,6 @@
             "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
             // Jamia/Overall Wise
             "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
-            "Division": { nameLabel: "Name", categoryLabel: "Division", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: DIVISION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
-            "State": { nameLabel: "Name", categoryLabel: "State", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: STATE_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
             "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
         };
         
@@ -280,7 +276,7 @@
                     defaultSubTab: "Ibtidaiya",
                 },
                 "Overall Rank": { 
-                    subTabs: ["Class", "Jamia", "Division", "State", "Region"],
+                    subTabs: ["Class", "Jamia", "Region"],
                     defaultSubTab: "Class",
                 }
             };
@@ -657,4 +653,5 @@
 
 </body>
 </html>
+
 
