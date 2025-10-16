@@ -133,6 +133,7 @@
 
         const POLL_INTERVAL_MS = 5000;
         const LOCALSTORAGE_KEY = "telethone_sheet_overrides_enhanced_live";
+        const UNIT_DIVISOR = 7000;
         
         function parseSheetIdFromUrl(input) {
             if (!input) return null;
@@ -251,22 +252,22 @@
 
         const RANKING_VIEW_CONFIG = {
             // Class Wise
-            "Ibtidaiya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Sale Awwal": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Sale Duwam": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Ula": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Saniya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Salisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Rabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Khamisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Sadisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Sabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Doratul Hadis": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Takhassusat": { nameLabel: "Jamia Name", categoryLabel: "Class", nameColCandidates: JAMIA_CANDIDATES, categoryColCandidates: USTAZ_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
-            "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES },
+            "Ibtidaiya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Sale Awwal": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Sale Duwam": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Ula": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Saniya": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Salisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Rabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Khamisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Sadisa": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Sabia": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Doratul Hadis": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Takhassusat": { nameLabel: "Jamia Name", categoryLabel: "Class", nameColCandidates: JAMIA_CANDIDATES, categoryColCandidates: USTAZ_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
+            "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
             // Jamia/Overall Wise
-            "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
-            "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES },
+            "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+            "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
         };
         
         function TelethoneEnhancedLive() {
@@ -351,7 +352,7 @@
                     const valueCol = findColumnByCandidates(cols, currentViewConfig.valueColCandidates);
 
                     if (!categoryCol || !valueCol) {
-                        setError(`Sheet mein '${currentViewConfig.categoryLabel}' aur '${currentViewConfig.valueIsUnit ? 'Unit' : 'Raqam'}' ke headers hone chahiye.`);
+                        setError(`Sheet mein '${currentViewConfig.categoryLabel}' aur '${currentViewConfig.valueColCandidates === UNIT_CANDIDATES ? 'Unit' : 'Raqam'}' ke headers hone chahiye.`);
                         setData({ items: [] });
                         setLoading(false);
                         setIsDataLoaded(true);
@@ -491,22 +492,47 @@
                         {error && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-rose-600 mb-4 p-2 border border-rose-300 bg-rose-50 rounded-lg">Error: {error}</div>}
                         <div className={`relative ${showFullScreenLoader ? 'opacity-50 pointer-events-none' : ''}`}>
                             <div className="hidden md:block">
-                                <div className="grid grid-cols-8 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
+                                <div className="grid grid-cols-10 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
                                     <div className="col-span-1">Rank</div>
                                     <div className="col-span-3">{nameLabel}</div>
                                     <div className="col-span-4 text-center">{categoryLabel}</div>
+                                    <div className="col-span-2 text-right">Units to Next</div>
                                 </div>
                                 <div className="space-y-1 mt-1">
                                     {data.items.map((it, idx) => {
                                         const styleClass = idx === 0 ? "bg-amber-50 border-amber-200 shadow-md" : idx === 1 ? "bg-gray-50 border-gray-200" : idx === 2 ? "bg-orange-50 border-orange-200" : "bg-white border-transparent hover:bg-gray-50";
                                         
+                                        const diffAhead = idx > 0 ? data.items[idx - 1].__value - it.__value : null;
+                                        
+                                        const formatDiff = (diff) => {
+                                            if (diff === null) return null;
+                                            let unitDiff;
+                                            if (currentViewConfig.valueIsUnit) {
+                                                unitDiff = diff;
+                                            } else {
+                                                unitDiff = diff / UNIT_DIVISOR;
+                                            }
+                                            if (unitDiff > -0.05 && unitDiff < 0.05) return "0.1"; // Show 0.1 if very close
+                                            return unitDiff.toFixed(1);
+                                        }
+
+                                        const formattedDiffAhead = formatDiff(diffAhead);
+
                                         return (
-                                            <div key={it.__id} className={`grid grid-cols-8 items-center gap-4 p-3 rounded-lg transition-all duration-600 ${styleClass} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
+                                            <div key={it.__id} className={`grid grid-cols-10 items-center gap-4 p-3 rounded-lg transition-all duration-600 ${styleClass} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
                                                 <div className="col-span-1 font-bold text-lg text-gray-800">{idx + 1}</div>
                                                 <div className="col-span-3 text-left text-sm">
                                                     <p className="font-bold text-gray-700 truncate">{it.name || "-"}</p>
                                                 </div>
                                                 <div className={`col-span-4 text-center font-bold text-gray-800 ${idx === 0 ? 'text-xl' : 'text-lg'}`}><span className="inline-flex items-center gap-2">{medalForIndex(idx)}<span>{it.category}</span></span></div>
+                                                <div className="col-span-2 text-right">
+                                                    {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
+                                                        <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage badhne ke liye ${formattedDiffAhead} units chahiye`}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
+                                                            {formattedDiffAhead}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         );
                                     })}
@@ -515,9 +541,25 @@
                             </div>
                             <div className="md:hidden space-y-3">
                                 {data.items.map((it, idx) => {
+                                    const diffAhead = idx > 0 ? data.items[idx - 1].__value - it.__value : null;
+
+                                    const formatDiff = (diff) => {
+                                        if (diff === null) return null;
+                                        let unitDiff;
+                                        if (currentViewConfig.valueIsUnit) {
+                                            unitDiff = diff;
+                                        } else {
+                                            unitDiff = diff / UNIT_DIVISOR;
+                                        }
+                                        if (unitDiff > -0.05 && unitDiff < 0.05) return "0.1";
+                                        return unitDiff.toFixed(1);
+                                    }
+
+                                    const formattedDiffAhead = formatDiff(diffAhead);
+                                    
                                     return (
                                     <div key={it.__id} className={`p-4 rounded-xl shadow-sm border ${idx === 0 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-200"} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-start justify-between">
                                             <div>
                                                 <div className="text-xl font-bold text-gray-800 flex items-center gap-2">
                                                     <span className="text-2xl">{idx + 1}.</span>
@@ -527,6 +569,14 @@
                                                 <div className="text-sm text-gray-600 mt-1">
                                                     <span className="font-semibold">{nameLabel}:</span> <span className="font-bold">{it.name || "-"}</span>
                                                 </div>
+                                            </div>
+                                            <div className="text-right">
+                                                {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
+                                                    <div>
+                                                        <span className="font-['Bebas_Neue'] text-3xl text-blue-600">+{formattedDiffAhead}</span>
+                                                        <span className="block text-xs text-gray-500 -mt-1 font-semibold">TO NEXT</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -615,14 +665,18 @@
                                         <LiveClock />
                                     </div>
                                     {rankError && <div className="text-sm text-rose-600 mb-4 p-2 border border-rose-300 bg-rose-50 rounded-lg">Error: {rankError}</div>}
-                                    <div className="hidden md:grid grid-cols-7 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
+                                    <div className="hidden md:grid grid-cols-9 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
                                         <div className="col-span-1">Rank</div>
                                         <div className="col-span-6">Class Name</div>
+                                        <div className="col-span-2 text-right">Units to Next</div>
                                     </div>
                                     <div className="space-y-3 mt-1">
                                         {overallRankData.map((item, idx) => {
+                                             const diffAhead = idx > 0 ? overallRankData[idx - 1].totalAmount - item.totalAmount : null;
+                                             const formattedDiffAhead = diffAhead !== null ? (diffAhead / UNIT_DIVISOR).toFixed(1) : null;
+
                                             return (
-                                            <div key={item.className} className={`rank-item grid grid-cols-7 items-center p-3 md:p-4 rounded-xl shadow-sm border ${idx === 0 ? "bg-amber-50 border-amber-300 shadow-md" : "bg-white border-gray-200 hover:shadow-md"}`}>
+                                            <div key={item.className} className={`rank-item grid grid-cols-9 items-center p-3 md:p-4 rounded-xl shadow-sm border ${idx === 0 ? "bg-amber-50 border-amber-300 shadow-md" : "bg-white border-gray-200 hover:shadow-md"}`}>
                                                 <div className="col-span-1 text-base md:text-2xl font-['Bebas_Neue'] text-center text-gray-800">{idx + 1}</div>
                                                 <div className="col-span-6 md:ml-4 flex-grow truncate">
                                                     <div className={`text-base md:text-lg font-bold ${idx === 0 ? "text-amber-700" : "text-gray-800"}`}>
@@ -630,6 +684,14 @@
                                                         <span className="ml-1 text-lg md:text-2xl">{medalForIndex(idx)}</span>
                                                     </div>
                                                     {item.error && <div className="text-xs text-rose-500 mt-1">Error: {item.error}</div>}
+                                                </div>
+                                                <div className="col-span-2 text-right">
+                                                    {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
+                                                        <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage badhne ke liye ${formattedDiffAhead} units chahiye`}>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
+                                                            {formattedDiffAhead}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         )})}
