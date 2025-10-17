@@ -214,8 +214,6 @@
         const RAQAM_CANDIDATES = ["Raqam", "RAQAM", "Amount", "Value", "रकम", "राशि"];
         const UNIT_CANDIDATES = ["Unit", "UNIT", "Units"];
         const NAME_CANDIDATES = ["Name", "name"];
-        const DIVISION_CANDIDATES = ["Division", "division"];
-        const STATE_CANDIDATES = ["State", "state"];
         const REGION_CANDIDATES = ["Region", "REGION", "Zone"];
 
 
@@ -270,6 +268,126 @@
             "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
         };
         
+        const RegionWiseCompetitionView = ({ competitionData, isLoading, error }) => {
+            if (isLoading && competitionData.length === 0) {
+                 return (
+                    <div className="flex justify-center items-center p-10">
+                        <div className="loader w-10 h-10 border-t-sky-500 border-4"></div>
+                        <span className="ml-4 text-slate-500">Competition data load ho raha hai...</span>
+                    </div>
+                );
+            }
+
+            if (error) return <div className="text-center p-4 text-rose-600">{error}</div>;
+            
+            if (competitionData.length === 0 && !isLoading) {
+                 return <div className="text-center p-10 text-slate-500">Koi competition data nahi mila. Sheets check karein.</div>;
+            }
+
+            return (
+                <div className="bg-white border rounded-lg p-2 md:p-4 shadow-md relative">
+                    {/* Header */}
+                    <div className="flex items-center px-4 py-3 bg-gray-100 rounded-lg font-bold text-gray-700 text-center mb-4">
+                        <div className="flex-1 text-lg md:text-xl font-['Bowlby_One_SC'] text-blue-600">Jamia-tul-Madina</div>
+                        <div className="w-12 text-gray-400">Vs</div>
+                        <div className="flex-1 text-lg md:text-xl font-['Bowlby_One_SC'] text-green-600">Madrasa-tul-Madina</div>
+                    </div>
+
+                    <div className="space-y-3">
+                        {competitionData.map(({ region, jamiaScore, madrasaScore }, idx) => {
+                            const jamiaWins = jamiaScore > madrasaScore;
+                            const madrasaWins = madrasaScore > jamiaScore;
+                            const diff = Math.abs(jamiaScore - madrasaScore);
+                            const neededUnits = (diff + 0.1).toFixed(1);
+
+                            return (
+                                <div key={idx} className="flex items-center text-center gap-2">
+                                    {/* Jamia Side */}
+                                    <div className={`relative flex-1 p-3 rounded-lg flex flex-col justify-center items-center ${jamiaWins ? 'bg-blue-100 ring-2 ring-blue-400' : 'bg-gray-50 border'}`}>
+                                        <span className={`font-['Bowlby_One_SC'] ${jamiaWins ? 'text-blue-800' : 'text-gray-700'} text-sm md:text-2xl uppercase`}>{region}</span>
+                                        {!jamiaWins && madrasaWins && (
+                                            <div className="mt-2 text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage badhne ke liye ${neededUnits} units chahiye`}>
+                                                <span className="hidden md:inline">+{neededUnits} Hajat</span>
+                                                <span className="md:hidden">+{neededUnits}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Vs */}
+                                    <div className="w-12 font-bold text-gray-300 text-lg md:text-xl">Vs</div>
+                                    
+                                    {/* Madrasa Side */}
+                                    <div className={`relative flex-1 p-3 rounded-lg flex flex-col justify-center items-center ${madrasaWins ? 'bg-green-100 ring-2 ring-green-400' : 'bg-gray-50 border'}`}>
+                                        <span className={`font-['Bowlby_One_SC'] ${madrasaWins ? 'text-green-800' : 'text-gray-700'} text-sm md:text-2xl uppercase`}>{region}</span>
+                                         {jamiaWins && !madrasaWins && (
+                                             <div className="mt-2 text-xs bg-green-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage badhne ke liye ${neededUnits} units chahiye`}>
+                                                <span className="hidden md:inline">+{neededUnits} Hajat</span>
+                                                <span className="md:hidden">+{neededUnits}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+        
+        const BigCompetitionView = ({ bigCompetitionData, isLoading, error }) => {
+            if (isLoading && (bigCompetitionData.jamiaTotal === 0 && bigCompetitionData.madrasaTotal === 0)) {
+                 return (
+                    <div className="flex justify-center items-center p-10">
+                        <div className="loader w-10 h-10 border-t-sky-500 border-4"></div>
+                        <span className="ml-4 text-slate-500">Competition data load ho raha hai...</span>
+                    </div>
+                );
+            }
+
+            if (error) return <div className="text-center p-4 text-rose-600">{error}</div>;
+
+            const { jamiaTotal, madrasaTotal } = bigCompetitionData;
+            const jamiaWins = jamiaTotal > madrasaTotal;
+            const madrasaWins = madrasaTotal > jamiaTotal;
+            const winnerScore = Math.max(jamiaTotal, madrasaTotal);
+            const loserScore = Math.min(jamiaTotal, madrasaTotal);
+            
+            let percentageBehind = 0;
+            if(winnerScore > 0) {
+                percentageBehind = ((winnerScore - loserScore) / winnerScore) * 100;
+            }
+
+            return (
+                <div className="bg-white border rounded-lg p-4 md:p-6 shadow-md relative">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">Big Competition</h2>
+                    <div className="flex flex-col md:flex-row items-stretch justify-center gap-4 md:gap-8">
+                        {/* Jamia-tul-Madina Card */}
+                        <div className={`w-full md:w-1/2 p-6 rounded-xl text-center transition-all duration-300 flex flex-col justify-center ${jamiaWins ? 'bg-blue-100 ring-4 ring-blue-400 shadow-2xl' : 'bg-gray-100'}`}>
+                            <h3 className="text-3xl md:text-4xl font-['Bowlby_One_SC'] text-blue-700">Jamia-tul-Madina</h3>
+                            {madrasaWins && percentageBehind > 0 && (
+                                 <div className="mt-4 text-xl font-bold text-red-500" title={`Peeche hai ${percentageBehind.toFixed(1)}% se`}>
+                                    <span>{percentageBehind.toFixed(1)}% Peeche</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* VS Separator */}
+                        <div className="font-['Bowlby_One_SC'] text-4xl text-gray-300 flex items-center justify-center">VS</div>
+
+                        {/* Madrasa-tul-Madina Card */}
+                        <div className={`w-full md:w-1/2 p-6 rounded-xl text-center transition-all duration-300 flex flex-col justify-center ${madrasaWins ? 'bg-green-100 ring-4 ring-green-400 shadow-2xl' : 'bg-gray-100'}`}>
+                            <h3 className="text-3xl md:text-4xl font-['Bowlby_One_SC'] text-green-700">Madrasa-tul-Madina</h3>
+                             {jamiaWins && percentageBehind > 0 && (
+                                 <div className="mt-4 text-xl font-bold text-red-500" title={`Peeche hai ${percentageBehind.toFixed(1)}% se`}>
+                                    <span>{percentageBehind.toFixed(1)}% Peeche</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         function TelethoneEnhancedLive() {
             const TAB_CONFIG = {
                 "Class Wise Rank": {
@@ -279,6 +397,12 @@
                 "Overall Rank": { 
                     subTabs: ["Class", "Jamia", "Region"],
                     defaultSubTab: "Class",
+                },
+                "Region Wise Competition": { 
+                    subTabs: [],
+                },
+                "Big Competition": { 
+                    subTabs: [],
                 }
             };
 
@@ -314,6 +438,14 @@
             const [isRankLoading, setRankLoading] = useState(true);
             const [isRankDataLoaded, setIsRankDataLoaded] = useState(false);
             const [rankError, setRankError] = useState(null);
+            
+            const [competitionData, setCompetitionData] = useState([]);
+            const [isCompetitionLoading, setCompetitionLoading] = useState(true);
+            const [competitionError, setCompetitionError] = useState(null);
+            
+            const [bigCompetitionData, setBigCompetitionData] = useState({ jamiaTotal: 0, madrasaTotal: 0 });
+            const [isBigCompetitionLoading, setBigCompetitionLoading] = useState(true);
+            const [bigCompetitionError, setBigCompetitionError] = useState(null);
 
             useEffect(() => {
                 loadOverallRank();
@@ -426,12 +558,179 @@
                 }
             }
             
+            async function loadRegionWiseCompetitionData() {
+                setCompetitionLoading(true);
+                setCompetitionError(null);
+
+                const competitionConfig = DEFAULT_SHEET_CONFIGS["Region"]; // Using the 'REGION' sheet config
+                const sheetId = overrides["Region"] ?? competitionConfig.id;
+
+                if (!isValidSheetId(sheetId)) {
+                    setCompetitionError("Region competition sheet is not configured.");
+                    setCompetitionLoading(false);
+                    return;
+                }
+
+                try {
+                    // This is a specialized fetch that returns raw rows to handle duplicate column names
+                    const url = gvizUrl(sheetId, competitionConfig.sheet);
+                    const res = await fetch(url, { cache: "no-cache" });
+                    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+                    const text = await res.text();
+                    const match = text.match(/setResponse\(([\s\S]*)\);?\s*$/);
+                    if (!match || !match[1]) throw new Error('Could not extract JSON from GViz response.');
+                    const data = JSON.parse(match[1]);
+
+                    const cols = (data.table.cols || []).map((c) => (c.label || "").toString());
+                    const rawRows = (data.table.rows || []).map((r) => r.c.map((cell) => (cell ? (cell.f !== undefined ? cell.f : cell.v) : null)));
+                    
+                    const regionIndices = [];
+                    const valueIndices = [];
+                    const valueIsUnit = [];
+
+                    cols.forEach((col, index) => {
+                        const lowerCol = (col || "").toLowerCase().trim();
+                        if (REGION_CANDIDATES.some(c => lowerCol === c.toLowerCase().trim())) {
+                            regionIndices.push(index);
+                        }
+                        if (UNIT_CANDIDATES.some(c => lowerCol === c.toLowerCase().trim())) {
+                            valueIndices.push(index);
+                            valueIsUnit.push(true);
+                        } else if (RAQAM_CANDIDATES.some(c => lowerCol === c.toLowerCase().trim())) {
+                            valueIndices.push(index);
+                            valueIsUnit.push(false);
+                        }
+                    });
+
+                    if (regionIndices.length < 2 || valueIndices.length < 2) {
+                         throw new Error("Sheet mein 'REGION' aur ('UNIT' ya 'RAQAM') ke do sets columns nahi mile.");
+                    }
+
+                    const jamiaData = {};
+                    const madrasaData = {};
+
+                    rawRows.forEach(row => {
+                        // Process Jamia side (first set of columns)
+                        const jamiaRegion = String(row[regionIndices[0]] || "").trim();
+                        const jamiaValue = parseNumericValue(row[valueIndices[0]]);
+                        if (jamiaRegion && !Number.isNaN(jamiaValue)) {
+                            const jamiaUnit = valueIsUnit[0] ? jamiaValue : jamiaValue / UNIT_DIVISOR;
+                            if (!jamiaData[jamiaRegion]) jamiaData[jamiaRegion] = 0;
+                            jamiaData[jamiaRegion] += jamiaUnit;
+                        }
+
+                        // Process Madrasa side (second set of columns)
+                        const madrasaRegion = String(row[regionIndices[1]] || "").trim();
+                        const madrasaValue = parseNumericValue(row[valueIndices[1]]);
+                        if (madrasaRegion && !Number.isNaN(madrasaValue)) {
+                           const madrasaUnit = valueIsUnit[1] ? madrasaValue : madrasaValue / UNIT_DIVISOR;
+                           if (!madrasaData[madrasaRegion]) madrasaData[madrasaRegion] = 0;
+                           madrasaData[madrasaRegion] += madrasaUnit;
+                        }
+                    });
+
+
+                    const allRegions = [...new Set([...Object.keys(jamiaData), ...Object.keys(madrasaData)])];
+                    allRegions.sort();
+
+                    const combinedData = allRegions.map(region => ({
+                        region,
+                        jamiaScore: jamiaData[region] || 0,
+                        madrasaScore: madrasaData[region] || 0,
+                    }));
+
+                    setCompetitionData(combinedData);
+
+                } catch (err) {
+                    setCompetitionError(err.message || "Data fetch karne mein masla hua.");
+                    console.error(err);
+                } finally {
+                    setCompetitionLoading(false);
+                }
+            }
+            
+            async function loadBigCompetitionData() {
+                setBigCompetitionLoading(true);
+                setBigCompetitionError(null);
+
+                try {
+                    // Fetch all class sheets for Jamia-tul-Madina total
+                    const classSheetOptions = TAB_CONFIG["Class Wise Rank"].subTabs;
+                    const jamiaFetchPromises = classSheetOptions.map(async (opt) => {
+                        const cfg = DEFAULT_SHEET_CONFIGS[opt];
+                        const id = overrides[opt] ?? cfg.id;
+                        if (!isValidSheetId(id)) return 0;
+                        try {
+                            const { cols, items } = await fetchSheetData(id, cfg.sheet);
+                            const raqamCol = findColumnByCandidates(cols, RAQAM_CANDIDATES);
+                            if (!raqamCol) return 0;
+                            let totalAmount = 0;
+                            items.forEach((r) => {
+                                const n = parseNumericValue(r[raqamCol]);
+                                totalAmount += Number.isNaN(n) ? 0 : n;
+                            });
+                            return totalAmount;
+                        } catch {
+                            return 0;
+                        }
+                    });
+                    
+                    const jamiaResults = await Promise.all(jamiaFetchPromises);
+                    const jamiaTotalRaqam = jamiaResults.reduce((sum, amount) => sum + amount, 0);
+                    const jamiaTotalUnits = jamiaTotalRaqam / UNIT_DIVISOR;
+
+                    // Fetch Madrasa-tul-Madina total from REGION sheet
+                    const competitionConfig = DEFAULT_SHEET_CONFIGS["Region"];
+                    const sheetId = overrides["Region"] ?? competitionConfig.id;
+                    if (!isValidSheetId(sheetId)) {
+                        throw new Error("Region competition sheet is not configured.");
+                    }
+                    
+                    const { cols, items } = await fetchSheetData(sheetId, competitionConfig.sheet);
+
+                    const valueIndices = [];
+                    const valueIsUnit = [];
+                    cols.forEach((col, index) => {
+                        const lowerCol = (col || "").toLowerCase().trim();
+                        if (UNIT_CANDIDATES.some(c => lowerCol === c.toLowerCase().trim())) { valueIndices.push(index); valueIsUnit.push(true); } 
+                        else if (RAQAM_CANDIDATES.some(c => lowerCol === c.toLowerCase().trim())) { valueIndices.push(index); valueIsUnit.push(false); }
+                    });
+
+                    if (valueIndices.length < 2) {
+                         throw new Error("Sheet mein 'UNIT' ya 'RAQAM' ke do sets columns nahi mile.");
+                    }
+
+                    let madrasaTotalUnits = 0;
+                    items.forEach(row => {
+                        const madrasaValue = parseNumericValue(row[cols[valueIndices[1]]]);
+                        if (!Number.isNaN(madrasaValue)) {
+                            madrasaTotalUnits += valueIsUnit[1] ? madrasaValue : madrasaValue / UNIT_DIVISOR;
+                        }
+                    });
+
+                    setBigCompetitionData({
+                        jamiaTotal: jamiaTotalUnits,
+                        madrasaTotal: madrasaTotalUnits,
+                    });
+
+                } catch (err) {
+                    setBigCompetitionError(err.message || "Big Competition data could not be loaded.");
+                    console.error(err);
+                } finally {
+                    setBigCompetitionLoading(false);
+                }
+            }
+
             // This is the main polling/timer effect that controls what happens for each tab.
             useEffect(() => {
                 let pollId;
                 let actionToRun = () => {};
-
-                if (mainActive === 'Overall Rank' && subActive === 'Class') {
+                
+                if(mainActive === 'Big Competition') {
+                    actionToRun = loadBigCompetitionData;
+                } else if (mainActive === 'Region Wise Competition') {
+                    actionToRun = loadRegionWiseCompetitionData;
+                } else if (mainActive === 'Overall Rank' && subActive === 'Class') {
                     actionToRun = loadOverallRank;
                 } else {
                     actionToRun = loadActiveSheet;
@@ -439,8 +738,8 @@
                 
                 const { id } = getActiveConfig();
                 const isRankingsView = mainActive === 'Class Wise Rank' || (mainActive === 'Overall Rank' && subActive !== 'Class');
-
-                if (isRankingsView && !isValidSheetId(id)) {
+                
+                if ( (isRankingsView && !isValidSheetId(id)) ) {
                      setData({ items: [] });
                      setError(null);
                      setLoading(false);
@@ -465,7 +764,9 @@
             const pageTitle = TAB_CONFIG[mainActive].subTabs.length > 0 ? subActive : mainActive;
 
             const showFullScreenLoader = (isLoading && !isDataLoaded) || 
-                                         (mainActive === "Overall Rank" && subActive === 'Class' && isRankLoading && !isRankDataLoaded);
+                                         (mainActive === "Overall Rank" && subActive === 'Class' && isRankLoading && !isRankDataLoaded) ||
+                                         (mainActive === "Region Wise Competition" && isCompetitionLoading && competitionData.length === 0) ||
+                                         (mainActive === "Big Competition" && isBigCompetitionLoading && bigCompetitionData.jamiaTotal === 0);
             
             
             const RankingsView = () => {
@@ -496,7 +797,7 @@
                                     <div className="col-span-1">Rank</div>
                                     <div className="col-span-3">{nameLabel}</div>
                                     <div className="col-span-4 text-center">{categoryLabel}</div>
-                                    <div className="col-span-2 text-right">Units to Next</div>
+                                    <div className="col-span-2 text-right">aage badhne ke liye unit Ki hajat</div>
                                 </div>
                                 <div className="space-y-1 mt-1">
                                     {data.items.map((it, idx) => {
@@ -572,9 +873,9 @@
                                             </div>
                                             <div className="text-right">
                                                 {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
-                                                    <div>
+                                                    <div title={`aage badhne ke liye ${formattedDiffAhead} unit Ki hajat`}>
                                                         <span className="font-['Bebas_Neue'] text-3xl text-blue-600">+{formattedDiffAhead}</span>
-                                                        <span className="block text-xs text-gray-500 -mt-1 font-semibold">TO NEXT</span>
+                                                        <span className="block text-xs text-gray-500 -mt-1 font-semibold">Hajat</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -657,8 +958,12 @@
                                     </div>
                                 </div>
                             )}
-
-                            {mainActive === "Overall Rank" && subActive === 'Class' ? (
+                            
+                            {mainActive === "Big Competition" ? (
+                                <BigCompetitionView bigCompetitionData={bigCompetitionData} isLoading={isBigCompetitionLoading} error={bigCompetitionError} />
+                            ) : mainActive === "Region Wise Competition" ? (
+                                <RegionWiseCompetitionView competitionData={competitionData} isLoading={isCompetitionLoading} error={competitionError} />
+                            ) : mainActive === "Overall Rank" && subActive === 'Class' ? (
                                 <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
                                     <div className="flex justify-between items-center mb-4 border-b pb-2">
                                         <h2 className="text-xl md:text-2xl font-bold text-gray-800">All India Classic Rank</h2>
@@ -668,7 +973,7 @@
                                     <div className="hidden md:grid grid-cols-9 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
                                         <div className="col-span-1">Rank</div>
                                         <div className="col-span-6">Class Name</div>
-                                        <div className="col-span-2 text-right">Units to Next</div>
+                                        <div className="col-span-2 text-right">aage badhne ke liye unit Ki hajat</div>
                                     </div>
                                     <div className="space-y-3 mt-1">
                                         {overallRankData.map((item, idx) => {
@@ -715,5 +1020,4 @@
 
 </body>
 </html>
-
 
