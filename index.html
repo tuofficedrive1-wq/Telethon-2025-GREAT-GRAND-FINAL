@@ -306,7 +306,7 @@
                                     <div className={`relative flex-1 p-3 rounded-lg flex flex-col justify-center items-center ${jamiaWins ? 'bg-blue-100 ring-2 ring-blue-400' : 'bg-gray-50 border'}`}>
                                         <span className={`font-['Bowlby_One_SC'] ${jamiaWins ? 'text-blue-800' : 'text-gray-700'} text-sm md:text-2xl uppercase`}>{region}</span>
                                         {!jamiaWins && madrasaWins && (
-                                            <div className="mt-2 text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage badhne ke liye ${neededUnits} units chahiye`}>
+                                            <div className="mt-2 text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage Badhne Ke Liye ${neededUnits} Unit Ki Hajat`}>
                                                 <span className="hidden md:inline">+{neededUnits} Hajat</span>
                                                 <span className="md:hidden">+{neededUnits}</span>
                                             </div>
@@ -320,7 +320,7 @@
                                     <div className={`relative flex-1 p-3 rounded-lg flex flex-col justify-center items-center ${madrasaWins ? 'bg-green-100 ring-2 ring-green-400' : 'bg-gray-50 border'}`}>
                                         <span className={`font-['Bowlby_One_SC'] ${madrasaWins ? 'text-green-800' : 'text-gray-700'} text-sm md:text-2xl uppercase`}>{region}</span>
                                          {jamiaWins && !madrasaWins && (
-                                             <div className="mt-2 text-xs bg-green-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage badhne ke liye ${neededUnits} units chahiye`}>
+                                             <div className="mt-2 text-xs bg-green-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage Badhne Ke Liye ${neededUnits} Unit Ki Hajat`}>
                                                 <span className="hidden md:inline">+{neededUnits} Hajat</span>
                                                 <span className="md:hidden">+{neededUnits}</span>
                                             </div>
@@ -797,7 +797,7 @@
                                     <div className="col-span-1">Rank</div>
                                     <div className="col-span-3">{nameLabel}</div>
                                     <div className="col-span-4 text-center">{categoryLabel}</div>
-                                    <div className="col-span-2 text-right">aage badhne ke liye unit Ki hajat</div>
+                                    <div className="col-span-2 text-right">Aage Badhne Ke Liye Unit Ki Hajat</div>
                                 </div>
                                 <div className="space-y-1 mt-1">
                                     {data.items.map((it, idx) => {
@@ -828,7 +828,7 @@
                                                 <div className={`col-span-4 text-center font-bold text-gray-800 ${idx === 0 ? 'text-xl' : 'text-lg'}`}><span className="inline-flex items-center gap-2">{medalForIndex(idx)}<span>{it.category}</span></span></div>
                                                 <div className="col-span-2 text-right">
                                                     {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
-                                                        <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage badhne ke liye ${formattedDiffAhead} units chahiye`}>
+                                                        <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage Badhne Ke Liye ${formattedDiffAhead} Unit Ki Hajat`}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
                                                             {formattedDiffAhead}
                                                         </span>
@@ -873,7 +873,7 @@
                                             </div>
                                             <div className="text-right">
                                                 {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
-                                                    <div title={`aage badhne ke liye ${formattedDiffAhead} unit Ki hajat`}>
+                                                    <div title={`Aage Badhne Ke Liye ${formattedDiffAhead} Unit Ki Hajat`}>
                                                         <span className="font-['Bebas_Neue'] text-3xl text-blue-600">+{formattedDiffAhead}</span>
                                                         <span className="block text-xs text-gray-500 -mt-1 font-semibold">Hajat</span>
                                                     </div>
@@ -973,7 +973,7 @@
                                     <div className="hidden md:grid grid-cols-9 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
                                         <div className="col-span-1">Rank</div>
                                         <div className="col-span-6">Class Name</div>
-                                        <div className="col-span-2 text-right">aage badhne ke liye unit Ki hajat</div>
+                                        <div className="col-span-2 text-right">Aage Badhne Ke Liye Unit Ki Hajat</div>
                                     </div>
                                     <div className="space-y-3 mt-1">
                                         {overallRankData.map((item, idx) => {
@@ -992,7 +992,7 @@
                                                 </div>
                                                 <div className="col-span-2 text-right">
                                                     {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
-                                                        <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage badhne ke liye ${formattedDiffAhead} units chahiye`}>
+                                                        <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage Badhne Ke Liye ${formattedDiffAhead} Unit Ki Hajat`}>
                                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
                                                             {formattedDiffAhead}
                                                         </span>
