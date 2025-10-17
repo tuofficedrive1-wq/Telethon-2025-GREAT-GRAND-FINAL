@@ -522,7 +522,7 @@
             async function loadOverallRank() {
                 setRankLoading(true);
                 setRankError(null);
-                const sheetOptions = TAB_CONFIG["Class Wise Rank"].subTabs; // Only aggregate class ranks
+                const sheetOptions = TAB_CONFIG["Class Wise Rank"].subTabs.filter(tab => tab !== "Darulifta Ahle Sunnat");
                 
                 const fetchPromises = sheetOptions.map(async (opt) => {
                     const cfg = DEFAULT_SHEET_CONFIGS[opt];
