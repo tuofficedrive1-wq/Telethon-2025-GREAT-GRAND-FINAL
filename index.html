@@ -349,7 +349,7 @@
                     defaultSubTab: "Ibtidaiya",
                 },
                 "Overall Rank": { 
-                    subTabs: ["Class", "Jamia", "Region"],
+                    subTabs: ["Class", "Jamia"],
                     defaultSubTab: "Class",
                 },
                 "Region Wise Competition": { 
@@ -844,9 +844,9 @@
                             
                             {mainActive === "Region Wise Competition" ? (
                                 <div className="space-y-4">
-                                    {subActive === "Jamia-tul-Madina" && <CompetitionRankView data={jamiaCompetitionData} isLoading={isCompetitionLoading} error={competitionError} teamName="Jamia-tul-Madina" />}
-                                    {subActive === "Madrasa-tul-Madina" && <CompetitionRankView data={madrasaCompetitionData} isLoading={isCompetitionLoading} error={competitionError} teamName="Madrasa-tul-Madina" />}
-                                    {subActive === "Darul-Madina" && <CompetitionRankView data={darulCompetitionData} isLoading={isCompetitionLoading} error={competitionError} teamName="Darul-Madina" />}
+                                    {subActive === "Jamia-tul-Madina" && <CompetitionRankView data={jamiaCompetitionData} isLoading={isCompetitionLoading} error={competitionError} />}
+                                    {subActive === "Madrasa-tul-Madina" && <CompetitionRankView data={madrasaCompetitionData} isLoading={isCompetitionLoading} error={competitionError} />}
+                                    {subActive === "Darul-Madina" && <CompetitionRankView data={darulCompetitionData} isLoading={isCompetitionLoading} error={competitionError} />}
                                 </div>
                             ) : mainActive === "Overall Rank" && subActive === 'Class' ? (
                                 <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
