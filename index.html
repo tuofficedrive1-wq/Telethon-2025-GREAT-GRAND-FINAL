@@ -126,9 +126,10 @@
             "Darulifta Ahle Sunnat": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "Darul Ifta" },
             
             // Jamia/Overall Wise Rank
-            "Class": { id: null, sheet: null }, // This is for the overall class rank view, not a sheet
-            "Jamia": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "JAMIA" },
-            "Region": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "REGION" },
+            "Overall Class Rank": { id: null, sheet: null }, // This is for the overall class rank view, not a sheet
+            "Jamia-tul-Madina": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "JAMIA" },
+            "Madrasa-tul-Madina": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "M" }, 
+            "Darul-Madina": { id: "1yHdj1almgPF4q_pPpSx7qZjfC1LoA6UChjit60_khfg", sheet: "D" },
         };
 
         const POLL_INTERVAL_MS = 5000;
@@ -210,14 +211,16 @@
         }
 
         const USTAZ_CANDIDATES = ["Ustaz Name", "USTAZ NAME", "Ustaz", "Ustad", "Instructor", "Teacher", "Class"];
-        const JAMIA_CANDIDATES = ["Jamia Name", "JAMIA NAME", "Jamia", "Jamiah"];
+        const JAMIA_CANDIDATES = ["Jamia Name", "JAMIA NAME", "Jamia", "Jamiah", "Campus Name", "Campus"];
         const RAQAM_CANDIDATES = ["Raqam", "RAQAM", "Amount", "Value", "रकम", "राशि"];
         const UNIT_CANDIDATES = ["Unit", "UNIT", "Units"];
         const NAME_CANDIDATES = ["Name", "name"];
         const REGION_CANDIDATES = ["Region", "REGION", "Zone"];
+        const STATE_CANDIDATES = ["State", "STATE"];
 
 
         function findColumnByCandidates(cols, candidates) {
+            if (!candidates) return null;
             const lower = cols.map((c) => (c || "").toLowerCase().trim());
             for (let cand of candidates) {
                 const target = cand.toLowerCase().trim();
@@ -264,95 +267,21 @@
             "Takhassusat": { nameLabel: "Jamia Name", categoryLabel: "Class", nameColCandidates: JAMIA_CANDIDATES, categoryColCandidates: USTAZ_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
             "Darulifta Ahle Sunnat": { nameLabel: "Ustaz Name", categoryLabel: "Jamia Name", nameColCandidates: USTAZ_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: RAQAM_CANDIDATES, valueIsUnit: false },
             // Jamia/Overall Wise
-            "Jamia": { nameLabel: "Name", categoryLabel: "Jamia", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
-            "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+            "Jamia-tul-Madina": { nameLabel: "Name", categoryLabel: "Jamia Name", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+            "Madrasa-tul-Madina": { nameLabel: null, categoryLabel: "State", nameColCandidates: null, categoryColCandidates: STATE_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
+            "Darul-Madina": { nameLabel: null, categoryLabel: "Campus Name", nameColCandidates: null, categoryColCandidates: JAMIA_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
         };
         
-        const CompetitionRankView = ({ data, isLoading, error }) => {
-            if (isLoading && data.length === 0) {
-                 return (
-                    <div className="flex justify-center items-center p-10">
-                        <div className="loader w-8 h-8 border-t-sky-500 border-4"></div>
-                    </div>
-                );
-            }
-
-            if (error) return <div className="text-center p-4 text-rose-600">{error}</div>;
-            
-            if (data.length === 0 && !isLoading) {
-                 return <div className="text-center p-10 text-slate-500">Is team ke liye data nahi mila.</div>;
-            }
-
-            const sortedData = [...data].sort((a,b) => b.score - a.score);
-
-            return (
-                 <div className="bg-white border rounded-lg p-4 shadow-md relative">
-                     {/* Desktop Header */}
-                     <div className="hidden md:grid grid-cols-10 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
-                        <div className="col-span-1">Rank</div>
-                        <div className="col-span-7">Region</div>
-                        <div className="col-span-2 text-right">Aage Badhne Ke Liye Unit Ki Hajat</div>
-                     </div>
-
-                     <div className="space-y-2 mt-2">
-                        {sortedData.map((item, idx) => {
-                            const diffAhead = idx > 0 ? sortedData[idx - 1].score - item.score : null;
-                            const formattedDiffAhead = diffAhead !== null ? (Math.max(0.1, diffAhead)).toFixed(1) : null;
-                            const isTop = idx === 0;
-
-                            return (
-                                <div key={item.region} className={`p-3 rounded-lg transition-all duration-300 ${isTop ? 'bg-amber-100 border-2 border-amber-300 shadow-lg' : 'bg-gray-50 border'}`}>
-                                    {/* Desktop View */}
-                                    <div className="hidden md:grid grid-cols-10 items-center">
-                                        <div className="col-span-8 flex items-center gap-3">
-                                            <span className="font-bold text-lg text-gray-600 w-6 text-center">{idx + 1}</span>
-                                            <span className={`font-['Bowlby_One_SC'] ${isTop ? 'text-amber-700' : 'text-gray-600'} text-xl uppercase`}>{item.region}</span>
-                                            {isTop && <span className="text-2xl">{medalForIndex(idx)}</span>}
-                                        </div>
-                                        <div className="col-span-2 text-right">
-                                            {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
-                                                <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage Badhne Ke Liye ${formattedDiffAhead} Unit Ki Hajat`}>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
-                                                    {formattedDiffAhead}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* Mobile View */}
-                                     <div className="md:hidden flex justify-between items-center">
-                                         <div className="flex items-center gap-3">
-                                             <span className="font-bold text-lg text-gray-600 w-6 text-center">{idx + 1}</span>
-                                             <span className={`font-['Bowlby_One_SC'] ${isTop ? 'text-amber-700' : 'text-gray-600'} text-md uppercase`}>{item.region}</span>
-                                             {isTop && <span className="text-2xl">{medalForIndex(idx)}</span>}
-                                         </div>
-                                         <div className="text-right">
-                                            {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
-                                                <div title={`Aage Badhne Ke Liye ${formattedDiffAhead} Unit Ki Hajat`}>
-                                                    <span className="font-['Bebas_Neue'] text-3xl text-blue-600">+{formattedDiffAhead}</span>
-                                                    <span className="block text-xs text-gray-500 -mt-1 font-semibold">Hajat</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                     </div>
-                                </div>
-                            );
-                        })}
-                     </div>
-                 </div>
-            );
-        };
-
         function TelethoneEnhancedLive() {
             const TAB_CONFIG = {
-                "Class Wise Rank": {
-                    subTabs: ["Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis", "Takhassusat", "Darulifta Ahle Sunnat"],
+                "Jamia Tul Madina Class Wise Rank": {
+                    subTabs: [
+                        "Ibtidaiya", "Sale Awwal", "Sale Duwam", "Ula", "Saniya", "Salisa", "Rabia", "Khamisa", "Sadisa", "Sabia", "Doratul Hadis", "Takhassusat", "Darulifta Ahle Sunnat",
+                        "Overall Class Rank"
+                    ],
                     defaultSubTab: "Ibtidaiya",
                 },
-                "Overall Rank": { 
-                    subTabs: ["Class", "Jamia"],
-                    defaultSubTab: "Class",
-                },
-                "Region Wise Competition": { 
+                "Competitions": { 
                     subTabs: ["Jamia-tul-Madina", "Madrasa-tul-Madina", "Darul-Madina"],
                     defaultSubTab: "Jamia-tul-Madina",
                 }
@@ -360,7 +289,7 @@
 
             const MAIN_TABS = Object.keys(TAB_CONFIG);
 
-            const [mainActive, setMainActive] = useState("Class Wise Rank");
+            const [mainActive, setMainActive] = useState("Jamia Tul Madina Class Wise Rank");
             const [subActive, setSubActive] = useState("Ibtidaiya"); 
             
             const [overrides, setOverrides] = useState(() => {
@@ -390,16 +319,12 @@
             const [isRankLoading, setRankLoading] = useState(true);
             const [isRankDataLoaded, setIsRankDataLoaded] = useState(false);
             const [rankError, setRankError] = useState(null);
-            
-            const [jamiaCompetitionData, setJamiaCompetitionData] = useState([]);
-            const [madrasaCompetitionData, setMadrasaCompetitionData] = useState([]);
-            const [darulCompetitionData, setDarulCompetitionData] = useState([]);
-            const [isCompetitionLoading, setCompetitionLoading] = useState(true);
-            const [competitionError, setCompetitionError] = useState(null);
 
             useEffect(() => {
-                loadOverallRank();
-            }, []);
+                if (mainActive === "Jamia Tul Madina Class Wise Rank" && subActive === "Overall Class Rank") {
+                    loadOverallRank();
+                }
+            }, [mainActive, subActive]);
             
             function getActiveConfig() {
                 const cfg = DEFAULT_SHEET_CONFIGS[subActive] || { id: "", sheet: "Sheet1" };
@@ -444,7 +369,7 @@
                     const parsed = rows
                         .map((r, idx) => ({ 
                             __id: idx,
-                            name: String(r[nameCol] || "").trim(), 
+                            name: nameCol ? String(r[nameCol] || "").trim() : "",
                             category: String(r[categoryCol] || "").trim(), 
                             __value: parseNumericValue(r[valueCol]),
                         }))
@@ -472,7 +397,7 @@
             async function loadOverallRank() {
                 setRankLoading(true);
                 setRankError(null);
-                const sheetOptions = TAB_CONFIG["Class Wise Rank"].subTabs.filter(tab => tab !== "Darulifta Ahle Sunnat");
+                const sheetOptions = TAB_CONFIG["Jamia Tul Madina Class Wise Rank"].subTabs.filter(tab => tab !== "Darulifta Ahle Sunnat" && tab !== "Overall Class Rank");
                 
                 const fetchPromises = sheetOptions.map(async (opt) => {
                     const cfg = DEFAULT_SHEET_CONFIGS[opt];
@@ -508,122 +433,21 @@
                 }
             }
             
-            async function loadRegionWiseCompetitionData() {
-                setCompetitionLoading(true);
-                setCompetitionError(null);
-
-                const competitionConfig = DEFAULT_SHEET_CONFIGS["Region"]; // Using the 'REGION' sheet config
-                const sheetId = overrides["Region"] ?? competitionConfig.id;
-
-                if (!isValidSheetId(sheetId)) {
-                    setCompetitionError("Region competition sheet is not configured.");
-                    setCompetitionLoading(false);
-                    return;
-                }
-
-                try {
-                    // This is a specialized fetch that returns raw rows to handle duplicate column names
-                    const url = gvizUrl(sheetId, competitionConfig.sheet);
-                    const res = await fetch(url, { cache: "no-cache" });
-                    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-                    const text = await res.text();
-                    const match = text.match(/setResponse\(([\s\S]*)\);?\s*$/);
-                    if (!match || !match[1]) throw new Error('Could not extract JSON from GViz response.');
-                    const data = JSON.parse(match[1]);
-
-                    const cols = (data.table.cols || []).map((c) => (c.label || "").toString());
-                    const rawRows = (data.table.rows || []).map((r) => r.c.map((cell) => (cell ? (cell.f !== undefined ? cell.f : cell.v) : null)));
-                    
-                    const regionIndices = [];
-                    const valueIndices = [];
-                    const valueIsUnit = [];
-
-                    cols.forEach((col, index) => {
-                        const lowerCol = (col || "").toLowerCase().trim();
-                        if (REGION_CANDIDATES.some(c => lowerCol === c.toLowerCase().trim())) {
-                            regionIndices.push(index);
-                        }
-                        if (UNIT_CANDIDATES.some(c => lowerCol === c.toLowerCase().trim())) {
-                            valueIndices.push(index);
-                            valueIsUnit.push(true);
-                        } else if (RAQAM_CANDIDATES.some(c => lowerCol === c.toLowerCase().trim())) {
-                            valueIndices.push(index);
-                            valueIsUnit.push(false);
-                        }
-                    });
-
-                    if (regionIndices.length < 3 || valueIndices.length < 3) {
-                         throw new Error("Sheet mein 'REGION' aur ('UNIT' ya 'RAQAM') ke teen sets columns nahi mile.");
-                    }
-
-                    const jamiaData = {};
-                    const madrasaData = {};
-                    const darulData = {};
-
-                    rawRows.forEach(row => {
-                        // Process Jamia side (first set of columns)
-                        const jamiaRegion = String(row[regionIndices[0]] || "").trim();
-                        const jamiaValue = parseNumericValue(row[valueIndices[0]]);
-                        if (jamiaRegion && !Number.isNaN(jamiaValue)) {
-                            const jamiaUnit = valueIsUnit[0] ? jamiaValue : jamiaValue / UNIT_DIVISOR;
-                            if (!jamiaData[jamiaRegion]) jamiaData[jamiaRegion] = 0;
-                            jamiaData[jamiaRegion] += jamiaUnit;
-                        }
-
-                        // Process Madrasa side (second set of columns)
-                        const madrasaRegion = String(row[regionIndices[1]] || "").trim();
-                        const madrasaValue = parseNumericValue(row[valueIndices[1]]);
-                        if (madrasaRegion && !Number.isNaN(madrasaValue)) {
-                           const madrasaUnit = valueIsUnit[1] ? madrasaValue : madrasaValue / UNIT_DIVISOR;
-                           if (!madrasaData[madrasaRegion]) madrasaData[madrasaRegion] = 0;
-                           madrasaData[madrasaRegion] += madrasaUnit;
-                        }
-                        
-                        // Process Darul side (third set of columns)
-                        const darulRegion = String(row[regionIndices[2]] || "").trim();
-                        const darulValue = parseNumericValue(row[valueIndices[2]]);
-                        if (darulRegion && !Number.isNaN(darulValue)) {
-                           const darulUnit = valueIsUnit[2] ? darulValue : darulValue / UNIT_DIVISOR;
-                           if (!darulData[darulRegion]) darulData[darulRegion] = 0;
-                           darulData[darulRegion] += darulUnit;
-                        }
-                    });
-                    
-                    const allRegions = [...new Set([...Object.keys(jamiaData), ...Object.keys(madrasaData), ...Object.keys(darulData)])];
-                    allRegions.sort();
-                    
-                    const processTeamData = (dataObject) => allRegions.map(region => ({ region, score: dataObject[region] || 0 }));
-
-                    setJamiaCompetitionData(processTeamData(jamiaData));
-                    setMadrasaCompetitionData(processTeamData(madrasaData));
-                    setDarulCompetitionData(processTeamData(darulData));
-
-
-                } catch (err) {
-                    setCompetitionError(err.message || "Data fetch karne mein masla hua.");
-                    console.error(err);
-                } finally {
-                    setCompetitionLoading(false);
-                }
-            }
-            
             // This is the main polling/timer effect that controls what happens for each tab.
             useEffect(() => {
                 let pollId;
                 let actionToRun = () => {};
                 
-                if (mainActive === 'Region Wise Competition') {
-                    actionToRun = loadRegionWiseCompetitionData;
-                } else if (mainActive === 'Overall Rank' && subActive === 'Class') {
+                if (mainActive === 'Jamia Tul Madina Class Wise Rank' && subActive === 'Overall Class Rank') {
                     actionToRun = loadOverallRank;
                 } else {
                     actionToRun = loadActiveSheet;
                 }
                 
                 const { id } = getActiveConfig();
-                const isRankingsView = mainActive === 'Class Wise Rank' || (mainActive === 'Overall Rank' && subActive !== 'Class');
+                const isRankingsView = mainActive === 'Jamia Tul Madina Class Wise Rank' || mainActive === 'Competitions';
                 
-                if ( (isRankingsView && !isValidSheetId(id)) ) {
+                if ( (isRankingsView && subActive !== 'Overall Class Rank' && !isValidSheetId(id)) ) {
                      setData({ items: [] });
                      setError(null);
                      setLoading(false);
@@ -648,14 +472,15 @@
             const pageTitle = TAB_CONFIG[mainActive].subTabs.length > 0 ? subActive : mainActive;
 
             const showFullScreenLoader = (isLoading && !isDataLoaded) || 
-                                         (mainActive === "Overall Rank" && subActive === 'Class' && isRankLoading && !isRankDataLoaded) ||
-                                         (mainActive === "Region Wise Competition" && isCompetitionLoading && jamiaCompetitionData.length === 0);
+                                         (mainActive === "Jamia Tul Madina Class Wise Rank" && subActive === 'Overall Class Rank' && isRankLoading && !isRankDataLoaded) ||
+                                         (mainActive === "Competitions" && isLoading && data.items.length === 0);
             
             
             const RankingsView = () => {
                  const currentViewConfig = RANKING_VIEW_CONFIG[subActive];
                  if (!currentViewConfig) return <div className="p-4 text-center text-rose-500">Error: No configuration found for {subActive}.</div>;
                  const { nameLabel, categoryLabel } = currentViewConfig;
+                 const isSimpleView = !currentViewConfig.nameLabel;
 
                  return (
                      <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
@@ -676,10 +501,10 @@
                         {error && isValidSheetId(getActiveConfig().id) && <div className="text-sm text-rose-600 mb-4 p-2 border border-rose-300 bg-rose-50 rounded-lg">Error: {error}</div>}
                         <div className={`relative ${showFullScreenLoader ? 'opacity-50 pointer-events-none' : ''}`}>
                             <div className="hidden md:block">
-                                <div className="grid grid-cols-10 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
+                                <div className={`grid ${isSimpleView ? 'grid-cols-8' : 'grid-cols-10'} items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg`}>
                                     <div className="col-span-1">Rank</div>
-                                    <div className="col-span-3">{nameLabel}</div>
-                                    <div className="col-span-4 text-center">{categoryLabel}</div>
+                                    {!isSimpleView && <div className="col-span-3">{nameLabel}</div>}
+                                    <div className={`${isSimpleView ? 'col-span-5' : 'col-span-4'} text-center`}>{categoryLabel}</div>
                                     <div className="col-span-2 text-right">Aage Badhne Ke Liye Unit Ki Hajat</div>
                                 </div>
                                 <div className="space-y-1 mt-1">
@@ -703,12 +528,14 @@
                                         const formattedDiffAhead = formatDiff(diffAhead);
 
                                         return (
-                                            <div key={it.__id} className={`grid grid-cols-10 items-center gap-4 p-3 rounded-lg transition-all duration-600 ${styleClass} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
+                                            <div key={it.__id} className={`grid ${isSimpleView ? 'grid-cols-8' : 'grid-cols-10'} items-center gap-4 p-3 rounded-lg transition-all duration-600 ${styleClass} ${it.__id === highlightKey ? "highlight-pulse" : ""}`}>
                                                 <div className="col-span-1 font-bold text-lg text-gray-800">{idx + 1}</div>
-                                                <div className="col-span-3 text-left text-sm">
-                                                    <p className="font-bold text-gray-700 truncate">{it.name || "-"}</p>
-                                                </div>
-                                                <div className={`col-span-4 text-center font-bold text-gray-800 ${idx === 0 ? 'text-xl' : 'text-lg'}`}><span className="inline-flex items-center gap-2">{medalForIndex(idx)}<span>{it.category}</span></span></div>
+                                                {!isSimpleView && (
+                                                    <div className="col-span-3 text-left text-sm">
+                                                        <p className="font-bold text-gray-700 truncate">{it.name || "-"}</p>
+                                                    </div>
+                                                )}
+                                                <div className={`text-center font-bold text-gray-800 ${idx === 0 ? 'text-xl' : 'text-lg'} ${isSimpleView ? 'col-span-5' : 'col-span-4'}`}><span className="inline-flex items-center gap-2">{medalForIndex(idx)}<span>{it.category}</span></span></div>
                                                 <div className="col-span-2 text-right">
                                                     {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
                                                         <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage Badhne Ke Liye ${formattedDiffAhead} Unit Ki Hajat`}>
@@ -750,9 +577,11 @@
                                                     <span className="truncate max-w-[150px] sm:max-w-[200px]">{it.category}</span>
                                                     <span>{medalForIndex(idx)}</span>
                                                 </div>
+                                                {!isSimpleView && (
                                                 <div className="text-sm text-gray-600 mt-1">
                                                     <span className="font-semibold">{nameLabel}:</span> <span className="font-bold">{it.name || "-"}</span>
                                                 </div>
+                                                )}
                                             </div>
                                             <div className="text-right">
                                                 {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
@@ -784,7 +613,6 @@
                             <h2 className="text-2xl sm:text-3xl font-['Bebas_Neue'] text-amber-500 tracking-widest mt-1 sm:mt-0 heading-anim">
                                 GREAT GRAND FINAL
                             </h2>
-                            <p className="text-sm text-gray-500 mt-2">Jamia-tul-Madina India Class/Jamia Wise Positions</p>
                         </header>
 
                         <nav className="mb-4">
@@ -842,13 +670,7 @@
                                 </div>
                             )}
                             
-                            {mainActive === "Region Wise Competition" ? (
-                                <div className="space-y-4">
-                                    {subActive === "Jamia-tul-Madina" && <CompetitionRankView data={jamiaCompetitionData} isLoading={isCompetitionLoading} error={competitionError} />}
-                                    {subActive === "Madrasa-tul-Madina" && <CompetitionRankView data={madrasaCompetitionData} isLoading={isCompetitionLoading} error={competitionError} />}
-                                    {subActive === "Darul-Madina" && <CompetitionRankView data={darulCompetitionData} isLoading={isCompetitionLoading} error={competitionError} />}
-                                </div>
-                            ) : mainActive === "Overall Rank" && subActive === 'Class' ? (
+                            {mainActive === "Jamia Tul Madina Class Wise Rank" && subActive === 'Overall Class Rank' ? (
                                 <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
                                     <div className="flex justify-between items-center mb-4 border-b pb-2">
                                         <h2 className="text-xl md:text-2xl font-bold text-gray-800">All India Classic Rank</h2>
