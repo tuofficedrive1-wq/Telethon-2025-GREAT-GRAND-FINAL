@@ -268,83 +268,77 @@
             "Region": { nameLabel: "Name", categoryLabel: "Region", nameColCandidates: NAME_CANDIDATES, categoryColCandidates: REGION_CANDIDATES, valueColCandidates: UNIT_CANDIDATES, valueIsUnit: true },
         };
         
-        const RegionWiseCompetitionView = ({ competitionData, isLoading, error }) => {
-            if (isLoading && competitionData.length === 0) {
+        const CompetitionRankView = ({ data, isLoading, error }) => {
+            if (isLoading && data.length === 0) {
                  return (
                     <div className="flex justify-center items-center p-10">
-                        <div className="loader w-10 h-10 border-t-sky-500 border-4"></div>
-                        <span className="ml-4 text-slate-500">Competition data load ho raha hai...</span>
+                        <div className="loader w-8 h-8 border-t-sky-500 border-4"></div>
                     </div>
                 );
             }
 
             if (error) return <div className="text-center p-4 text-rose-600">{error}</div>;
             
-            if (competitionData.length === 0 && !isLoading) {
-                 return <div className="text-center p-10 text-slate-500">Koi competition data nahi mila. Sheets check karein.</div>;
+            if (data.length === 0 && !isLoading) {
+                 return <div className="text-center p-10 text-slate-500">Is team ke liye data nahi mila.</div>;
             }
 
+            const sortedData = [...data].sort((a,b) => b.score - a.score);
+
             return (
-                <div className="bg-white border rounded-lg p-2 md:p-4 shadow-md relative">
-                    {/* Header */}
-                    <div className="grid grid-cols-3 items-center px-4 py-3 bg-gray-100 rounded-lg font-bold text-gray-700 text-center mb-4">
-                        <h3 className="text-md md:text-xl font-['Bowlby_One_SC'] text-blue-600">Jamia-tul-Madina</h3>
-                        <h3 className="text-md md:text-xl font-['Bowlby_One_SC'] text-green-600">Madrasa-tul-Madina</h3>
-                        <h3 className="text-md md:text-xl font-['Bowlby_One_SC'] text-purple-600">Darul-Madina</h3>
-                    </div>
+                 <div className="bg-white border rounded-lg p-4 shadow-md relative">
+                     {/* Desktop Header */}
+                     <div className="hidden md:grid grid-cols-10 items-center px-3 py-2 border-b text-sm font-semibold text-gray-600 bg-gray-50 rounded-t-lg">
+                        <div className="col-span-1">Rank</div>
+                        <div className="col-span-7">Region</div>
+                        <div className="col-span-2 text-right">Aage Badhne Ke Liye Unit Ki Hajat</div>
+                     </div>
 
-                    <div className="space-y-3">
-                        {competitionData.map(({ region, jamiaScore, madrasaScore, darulScore }, idx) => {
-                            const scores = [jamiaScore, madrasaScore, darulScore];
-                            const winnerScore = Math.max(...scores);
-
-                            const isJamiaWinner = jamiaScore === winnerScore && winnerScore > 0;
-                            const isMadrasaWinner = madrasaScore === winnerScore && winnerScore > 0;
-                            const isDarulWinner = darulScore === winnerScore && winnerScore > 0;
-
-                            const jamiaNeeded = !isJamiaWinner && winnerScore > jamiaScore ? (winnerScore - jamiaScore + 0.1).toFixed(1) : 0;
-                            const madrasaNeeded = !isMadrasaWinner && winnerScore > madrasaScore ? (winnerScore - madrasaScore + 0.1).toFixed(1) : 0;
-                            const darulNeeded = !isDarulWinner && winnerScore > darulScore ? (winnerScore - darulScore + 0.1).toFixed(1) : 0;
+                     <div className="space-y-2 mt-2">
+                        {sortedData.map((item, idx) => {
+                            const diffAhead = idx > 0 ? sortedData[idx - 1].score - item.score : null;
+                            const formattedDiffAhead = diffAhead !== null ? (Math.max(0.1, diffAhead)).toFixed(1) : null;
+                            const isTop = idx === 0;
 
                             return (
-                                <div key={idx} className="grid grid-cols-3 items-stretch text-center gap-2">
-                                    {/* Jamia Side */}
-                                    <div className={`relative p-3 rounded-lg flex flex-col justify-center items-center ${isJamiaWinner ? 'bg-blue-100 ring-2 ring-blue-400' : 'bg-gray-50 border'}`}>
-                                        <span className={`font-['Bowlby_One_SC'] ${isJamiaWinner ? 'text-blue-800' : 'text-gray-700'} text-sm md:text-2xl uppercase`}>{region}</span>
-                                        {jamiaNeeded > 0 && (
-                                            <div className="mt-2 text-xs bg-blue-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage Badhne Ke Liye ${jamiaNeeded} Unit Ki Hajat`}>
-                                                <span className="hidden md:inline">+{jamiaNeeded} Hajat</span>
-                                                <span className="md:hidden">+{jamiaNeeded}</span>
-                                            </div>
-                                        )}
+                                <div key={item.region} className={`p-3 rounded-lg transition-all duration-300 ${isTop ? 'bg-amber-100 border-2 border-amber-300 shadow-lg' : 'bg-gray-50 border'}`}>
+                                    {/* Desktop View */}
+                                    <div className="hidden md:grid grid-cols-10 items-center">
+                                        <div className="col-span-8 flex items-center gap-3">
+                                            <span className="font-bold text-lg text-gray-600 w-6 text-center">{idx + 1}</span>
+                                            <span className={`font-['Bowlby_One_SC'] ${isTop ? 'text-amber-700' : 'text-gray-600'} text-xl uppercase`}>{item.region}</span>
+                                            {isTop && <span className="text-2xl">{medalForIndex(idx)}</span>}
+                                        </div>
+                                        <div className="col-span-2 text-right">
+                                            {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
+                                                <span className="font-['Bebas_Neue'] text-2xl text-blue-600 flex items-center justify-end" title={`Aage Badhne Ke Liye ${formattedDiffAhead} Unit Ki Hajat`}>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" /></svg>
+                                                    {formattedDiffAhead}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    
-                                    {/* Madrasa Side */}
-                                    <div className={`relative p-3 rounded-lg flex flex-col justify-center items-center ${isMadrasaWinner ? 'bg-green-100 ring-2 ring-green-400' : 'bg-gray-50 border'}`}>
-                                        <span className={`font-['Bowlby_One_SC'] ${isMadrasaWinner ? 'text-green-800' : 'text-gray-700'} text-sm md:text-2xl uppercase`}>{region}</span>
-                                        {madrasaNeeded > 0 && (
-                                             <div className="mt-2 text-xs bg-green-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage Badhne Ke Liye ${madrasaNeeded} Unit Ki Hajat`}>
-                                                <span className="hidden md:inline">+{madrasaNeeded} Hajat</span>
-                                                <span className="md:hidden">+{madrasaNeeded}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Darul Side */}
-                                     <div className={`relative p-3 rounded-lg flex flex-col justify-center items-center ${isDarulWinner ? 'bg-purple-100 ring-2 ring-purple-400' : 'bg-gray-50 border'}`}>
-                                        <span className={`font-['Bowlby_One_SC'] ${isDarulWinner ? 'text-purple-800' : 'text-gray-700'} text-sm md:text-2xl uppercase`}>{region}</span>
-                                        {darulNeeded > 0 && (
-                                             <div className="mt-2 text-xs bg-purple-500 text-white font-bold px-2 py-0.5 rounded-full shadow-lg whitespace-nowrap" title={`Aage Badhne Ke Liye ${darulNeeded} Unit Ki Hajat`}>
-                                                <span className="hidden md:inline">+{darulNeeded} Hajat</span>
-                                                <span className="md:hidden">+{darulNeeded}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                    {/* Mobile View */}
+                                     <div className="md:hidden flex justify-between items-center">
+                                         <div className="flex items-center gap-3">
+                                             <span className="font-bold text-lg text-gray-600 w-6 text-center">{idx + 1}</span>
+                                             <span className={`font-['Bowlby_One_SC'] ${isTop ? 'text-amber-700' : 'text-gray-600'} text-md uppercase`}>{item.region}</span>
+                                             {isTop && <span className="text-2xl">{medalForIndex(idx)}</span>}
+                                         </div>
+                                         <div className="text-right">
+                                            {formattedDiffAhead !== null && parseFloat(formattedDiffAhead) > 0.0 && (
+                                                <div title={`Aage Badhne Ke Liye ${formattedDiffAhead} Unit Ki Hajat`}>
+                                                    <span className="font-['Bebas_Neue'] text-3xl text-blue-600">+{formattedDiffAhead}</span>
+                                                    <span className="block text-xs text-gray-500 -mt-1 font-semibold">Hajat</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                     </div>
                                 </div>
                             );
                         })}
-                    </div>
-                </div>
+                     </div>
+                 </div>
             );
         };
 
@@ -359,7 +353,8 @@
                     defaultSubTab: "Class",
                 },
                 "Region Wise Competition": { 
-                    subTabs: [],
+                    subTabs: ["Jamia-tul-Madina", "Madrasa-tul-Madina", "Darul-Madina"],
+                    defaultSubTab: "Jamia-tul-Madina",
                 }
             };
 
@@ -396,7 +391,9 @@
             const [isRankDataLoaded, setIsRankDataLoaded] = useState(false);
             const [rankError, setRankError] = useState(null);
             
-            const [competitionData, setCompetitionData] = useState([]);
+            const [jamiaCompetitionData, setJamiaCompetitionData] = useState([]);
+            const [madrasaCompetitionData, setMadrasaCompetitionData] = useState([]);
+            const [darulCompetitionData, setDarulCompetitionData] = useState([]);
             const [isCompetitionLoading, setCompetitionLoading] = useState(true);
             const [competitionError, setCompetitionError] = useState(null);
 
@@ -591,19 +588,16 @@
                            darulData[darulRegion] += darulUnit;
                         }
                     });
-
-
+                    
                     const allRegions = [...new Set([...Object.keys(jamiaData), ...Object.keys(madrasaData), ...Object.keys(darulData)])];
                     allRegions.sort();
+                    
+                    const processTeamData = (dataObject) => allRegions.map(region => ({ region, score: dataObject[region] || 0 }));
 
-                    const combinedData = allRegions.map(region => ({
-                        region,
-                        jamiaScore: jamiaData[region] || 0,
-                        madrasaScore: madrasaData[region] || 0,
-                        darulScore: darulData[region] || 0,
-                    }));
+                    setJamiaCompetitionData(processTeamData(jamiaData));
+                    setMadrasaCompetitionData(processTeamData(madrasaData));
+                    setDarulCompetitionData(processTeamData(darulData));
 
-                    setCompetitionData(combinedData);
 
                 } catch (err) {
                     setCompetitionError(err.message || "Data fetch karne mein masla hua.");
@@ -655,7 +649,7 @@
 
             const showFullScreenLoader = (isLoading && !isDataLoaded) || 
                                          (mainActive === "Overall Rank" && subActive === 'Class' && isRankLoading && !isRankDataLoaded) ||
-                                         (mainActive === "Region Wise Competition" && isCompetitionLoading && competitionData.length === 0);
+                                         (mainActive === "Region Wise Competition" && isCompetitionLoading && jamiaCompetitionData.length === 0);
             
             
             const RankingsView = () => {
@@ -849,7 +843,11 @@
                             )}
                             
                             {mainActive === "Region Wise Competition" ? (
-                                <RegionWiseCompetitionView competitionData={competitionData} isLoading={isCompetitionLoading} error={competitionError} />
+                                <div className="space-y-4">
+                                    {subActive === "Jamia-tul-Madina" && <CompetitionRankView data={jamiaCompetitionData} isLoading={isCompetitionLoading} error={competitionError} teamName="Jamia-tul-Madina" />}
+                                    {subActive === "Madrasa-tul-Madina" && <CompetitionRankView data={madrasaCompetitionData} isLoading={isCompetitionLoading} error={competitionError} teamName="Madrasa-tul-Madina" />}
+                                    {subActive === "Darul-Madina" && <CompetitionRankView data={darulCompetitionData} isLoading={isCompetitionLoading} error={competitionError} teamName="Darul-Madina" />}
+                                </div>
                             ) : mainActive === "Overall Rank" && subActive === 'Class' ? (
                                 <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative">
                                     <div className="flex justify-between items-center mb-4 border-b pb-2">
